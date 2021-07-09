@@ -20,6 +20,8 @@ import typing as T
 
 import semantic_version as semver
 
+from . import errors
+
 
 class MigrationStep(abc.ABC):
     """
@@ -73,7 +75,13 @@ class MigrationManager:
 
         :param path: path to the directory containing migration step scripts.
         """
-        raise NotImplementedError()
+        self.__path = path
+
+        # Data that is filled with ``__read_migrations_dir()``. Any method that
+        # needs to access this must call ``__read_migrations_dir()``.
+        self.__version_indices = None
+        self.__versions = None
+        self.__steps_paths = None
 
     def new_step_script(self,
             name: str,
@@ -109,7 +117,13 @@ class MigrationManager:
 
         :returns: the matched version object.
         """
-        raise NotImplementedError()
+        self.__read_migrations_dir()
+        for v in reversed(self.__versions):
+            if spec.match(v):
+                return v
+        else:
+            msg = f'no migration step found for spec {spec}'
+            raise errors.VersionNotFoundError(msg)
 
     def get_versions(self,
             current: semver.Version,
@@ -136,7 +150,33 @@ class MigrationManager:
         Note that a ``None`` value for a version represents the very first
         state of the application.
         """
-        raise NotImplementedError()
+        self.__read_migrations_dir()
+
+        if current is not None and current not in self.__version_indices:
+            msg = f'no migration step found for {current}'
+            raise errors.VersionNotFoundError(msg)
+
+        if target is not None and target not in self.__version_indices:
+            msg = f'no migration step found for {target}'
+            raise errors.VersionNotFoundError(msg)
+
+        if current == target:
+            return []
+
+        if current is None or target is not None and current < target:
+            a = current
+            b = target
+            is_upgrade = True
+        else:
+            a = target
+            b = current
+            is_upgrade = False
+
+        slice_start = 0 if a is None else (self.__version_indices[a] + 1)
+        slice_end = self.__version_indices[b] + 1
+        sliced_versions = self.__versions[slice_start:slice_end]
+        r = sliced_versions if is_upgrade else reversed(sliced_versions)
+        return list(r)
 
     def get_steps(self,
             current: semver.Version,
@@ -161,6 +201,43 @@ class MigrationManager:
           necessary for the migration.
         """
         raise NotImplementedError()
+
+    def __read_migrations_dir(self):
+        """
+        Read the directory with migration steps and fill appropriate instance
+        variables.
+
+        This method reads the directory only once. Any subsequent call is
+        ignored.
+        """
+        if self.__version_indices is not None:
+            return
+
+        paths = list(self.__path.glob('v*__*.py'))
+
+        versions = [None] * len(paths)
+        for i, path in enumerate(paths):
+            version_str = path.name[1:path.name.index('__')]
+            try:
+                version = semver.Version(version_str)
+            except ValueError as e:
+                msg = f'{path} contains an invalid version string: {e}'
+                raise ValueError(msg) from e
+            else:
+                versions[i] = version
+
+        versions, paths = zip(*sorted(zip(versions, paths)))
+
+        for i in range(1, len(versions)):
+            if versions[i] == versions[i - 1]:
+                msg = f'{paths[i]} and {paths[i - 1]} are defined as migration steps for the same target version'
+                raise ValueError(msg)
+
+        indices = {v: i for i, v in enumerate(versions)}
+
+        self.__version_indices = indices
+        self.__versions = versions
+        self.__steps_paths = paths
 
 
 class MigrationInfo:
