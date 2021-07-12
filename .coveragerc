@@ -1,0 +1,3 @@
+[run]
+source=svip
+command_line = -m pytest -v
