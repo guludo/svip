@@ -256,6 +256,17 @@ class MigrationManager:
 
         paths = list(self.__path.glob('v*__*.py'))
 
+        # Let's check if there are other scripts in there. A migration step not
+        # being recognized because typo is dangerous for data integrity.
+        # TODO: document the possibility of having helper modules prefixed with
+        # 'mod_'.
+        all_paths = set(self.__path.glob('*.py'))
+        mod_paths = set(self.__path.glob('mod_*.py'))
+        unrecognized_paths = all_paths - mod_paths - set(paths)
+        if unrecognized_paths:
+            msg = f'found the following unrecognized scripts in {self.__path}: {unrecognized_paths}'
+            raise errors.UnrecognizedScriptFound(msg)
+
         versions = [None] * len(paths)
         for i, path in enumerate(paths):
             version_str = path.name[1:path.name.index('__')]

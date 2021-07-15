@@ -43,5 +43,9 @@ class RestoreNotImplementedError(ErrorBase):
     pass
 
 
+class UnrecognizedScriptFound(ErrorBase):
+    pass
+
+
 class VersionNotFoundError(ErrorBase):
     pass
