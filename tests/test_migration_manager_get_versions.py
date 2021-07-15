@@ -5,8 +5,8 @@ import svip.errors
 import svip.migration
 
 
-def test_upgrade(datadir):
-    manager = svip.migration.MigrationManager(datadir / 'valid-step-filenames')
+def test_upgrade(valid_step_filenames_dir):
+    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
 
     versions = manager.get_versions(
         current=None,
@@ -33,8 +33,8 @@ def test_upgrade(datadir):
     assert versions == expected_versions
 
 
-def test_downgrade(datadir):
-    manager = svip.migration.MigrationManager(datadir / 'valid-step-filenames')
+def test_downgrade(valid_step_filenames_dir):
+    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
 
     versions = manager.get_versions(
         current=semver.Version('0.1.2'),
@@ -60,8 +60,8 @@ def test_downgrade(datadir):
     assert versions == expected_versions
 
 
-def test_no_op(datadir):
-    manager = svip.migration.MigrationManager(datadir / 'valid-step-filenames')
+def test_no_op(valid_step_filenames_dir):
+    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
 
     versions = manager.get_versions(current=None, target=None)
     assert versions == []
@@ -73,8 +73,8 @@ def test_no_op(datadir):
     assert versions == []
 
 
-def test_version_not_found(datadir):
-    manager = svip.migration.MigrationManager(datadir / 'valid-step-filenames')
+def test_version_not_found(valid_step_filenames_dir):
+    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
 
     with pytest.raises(svip.errors.VersionNotFoundError):
         manager.get_versions(current=semver.Version('3.4.1'), target=None)

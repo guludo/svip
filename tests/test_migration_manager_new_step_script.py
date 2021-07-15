@@ -5,9 +5,9 @@ import semantic_version as semver
 import svip.migration
 
 
-def test_script_content(datadir, tmp_path):
+def test_script_content(valid_step_filenames_dir, tmp_path):
     shutil.copytree(
-        datadir / 'valid-step-filenames',
+        valid_step_filenames_dir,
         tmp_path,
         dirs_exist_ok=True,
     )
@@ -36,9 +36,9 @@ def test_script_content(datadir, tmp_path):
     assert script_path.read_text() == expected_content
 
 
-def test_in_existing_dir(datadir, tmp_path):
+def test_in_existing_dir(valid_step_filenames_dir, tmp_path):
     shutil.copytree(
-        datadir / 'valid-step-filenames',
+        valid_step_filenames_dir,
         tmp_path,
         dirs_exist_ok=True,
     )
