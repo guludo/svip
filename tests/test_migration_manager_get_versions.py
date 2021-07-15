@@ -96,3 +96,17 @@ def test_empty_dir(tmp_path):
         # Testing with any version here. Just to make sure manager reads the
         # empty directory
         manager.get_versions(current=None, target=semver.Version('1.0.0'))
+
+
+def test_partial_version_strings(datadir):
+    manager = svip.migration.MigrationManager(datadir / 'partial-versions')
+    versions = manager.get_versions(
+        current=None,
+        target=manager.get_latest_match(semver.NpmSpec('*')),
+    )
+    expected_versions = [
+        semver.Version('1.0.0'),
+        semver.Version('2.0.0'),
+        semver.Version('2.1.0'),
+    ]
+    assert versions == expected_versions

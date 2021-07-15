@@ -260,7 +260,14 @@ class MigrationManager:
         for i, path in enumerate(paths):
             version_str = path.name[1:path.name.index('__')]
             try:
-                version = semver.Version(version_str)
+                parsed = semver.Version.parse(version_str, partial=True)
+                version = semver.Version(
+                    major=parsed[0] or 0,
+                    minor=parsed[1] or 0,
+                    patch=parsed[2] or 0,
+                    prerelease=parsed[3],
+                    build=parsed[4],
+                )
             except ValueError as e:
                 msg = f'{path} contains an invalid version string: {e}'
                 raise ValueError(msg) from e
