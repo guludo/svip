@@ -226,7 +226,8 @@ class MigrationManager:
             else:
                 versions[i] = version
 
-        versions, paths = zip(*sorted(zip(versions, paths)))
+        if paths:
+            versions, paths = zip(*sorted(zip(versions, paths)))
 
         for i in range(1, len(versions)):
             if versions[i] == versions[i - 1]:

@@ -88,3 +88,11 @@ def test_version_not_found(datadir):
             current=semver.Version('15.0.0'),
             target=semver.Version('15.0.0'),
         )
+
+
+def test_empty_dir(tmp_path):
+    manager = svip.migration.MigrationManager(tmp_path)
+    with pytest.raises(svip.errors.VersionNotFoundError):
+        # Testing with any version here. Just to make sure manager reads the
+        # empty directory
+        manager.get_versions(current=None, target=semver.Version('1.0.0'))
