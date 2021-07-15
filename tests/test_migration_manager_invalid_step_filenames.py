@@ -1,15 +1,8 @@
-import pathlib
-
 import pytest
 import semantic_version as semver
 
 import svip.errors
 import svip.migration
-
-
-@pytest.fixture
-def datadir():
-    return pathlib.Path(__file__).parent / 'data'
 
 
 def test_duplicated_versions(datadir):
