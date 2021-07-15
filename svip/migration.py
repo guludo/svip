@@ -103,7 +103,48 @@ class MigrationManager:
         next version is defined as the latest version incremented by one on one
         of the version components (major, minor or patch).
         """
-        raise NotImplementedError()
+        self.__read_migrations_dir()
+
+        v = self.__versions[-1] if self.__versions else semver.Version('0.0.0')
+
+        if bump_type == BumpType.MAJOR:
+            next_version = v.next_major()
+        elif bump_type == BumpType.MINOR:
+            next_version = v.next_minor()
+        elif bump_type == BumpType.PATCH:
+            next_version = v.next_patch()
+        else:
+            raise RuntimeError(f'unhandled bump type: {bump_type}') # pragma: no cover
+
+        template = '\n'.join([
+            "\"\"\"",
+            "Migration step for version {version} of the application's schema.",
+            "\"\"\"",
+            "",
+            "",
+            "def up():",
+            "    # TODO: Implement this!",
+            "    raise NotImplementedError()",
+            "",
+            "",
+            "def down():",
+            "    # TODO: Implement this if this step is reversible. Otherwise,",
+            "    # remove the definition of down().",
+            "    raise NotImplementedError()",
+        ])
+        script_content = template.format(version=next_version)
+
+        formatted_name = name.replace(' ', '-')
+        script_filename = f'v{next_version}__{formatted_name}.py'
+        script_path = self.__path / script_filename
+
+        script_path.write_text(script_content)
+
+        self.__version_indices[next_version] = len(self.__versions)
+        self.__versions.append(next_version)
+        self.__steps_paths.append(script_path)
+
+        return script_path, next_version
 
     def get_latest_match(self, spec: semver.NpmSpec) -> semver.Version:
         """
