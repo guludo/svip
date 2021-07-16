@@ -9,7 +9,7 @@ def test_valid_formats(get_steps_dir_factory):
     manager = svip.migration.MigrationManager(get_steps_dir_factory())
 
     steps = manager.get_steps(
-        current=None,
+        current=semver.Version('0.0.0'),
         target=manager.get_latest_match(semver.NpmSpec('*')),
     )
     ids_from_metadata = [step.metadata['id_for_test'] for step in steps]
@@ -28,7 +28,7 @@ def test_irreversible_step(get_steps_dir_factory):
     ):
         list(manager.get_steps(
             current=manager.get_latest_match(semver.NpmSpec('*')),
-            target=None,
+            target=semver.Version('0.0.0'),
         ))
 
 
@@ -62,6 +62,6 @@ def test_format_errors(directory, error_class, error_match, get_steps_dir_factor
         match=error_match,
     ):
         list(manager.get_steps(
-            current=None,
+            current=semver.Version('0.0.0'),
             target=manager.get_latest_match(semver.NpmSpec('*')),
         ))

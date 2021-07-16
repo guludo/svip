@@ -34,7 +34,7 @@ def test_in_existing_dir(filenames_dir_factory):
 
     latest_before_new_steps = manager.get_latest_match(semver.NpmSpec('*'))
     versions_before_new_steps = manager.get_versions(
-        current=None,
+        current=semver.Version('0.0.0'),
         target=latest_before_new_steps,
     )
 
@@ -65,7 +65,7 @@ def test_in_existing_dir(filenames_dir_factory):
     assert manager.get_latest_match(semver.NpmSpec('*')) == semver.Version('3.0.1')
 
     new_versions = manager.get_versions(
-        current=None,
+        current=semver.Version('0.0.0'),
         target=semver.Version('3.0.1'),
     )
     expected_new_versions = versions_before_new_steps + [

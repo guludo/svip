@@ -9,7 +9,7 @@ def test_upgrade(filenames_dir_factory):
     manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     versions = manager.get_versions(
-        current=None,
+        current=semver.Version('0.0.0'),
         target=semver.Version('2.65.921'),
     )
     expected_versions = [
@@ -38,7 +38,7 @@ def test_downgrade(filenames_dir_factory):
 
     versions = manager.get_versions(
         current=semver.Version('0.1.2'),
-        target=None,
+        target=semver.Version('0.0.0'),
     )
     expected_versions = [
         semver.Version('0.1.2'),
@@ -63,7 +63,10 @@ def test_downgrade(filenames_dir_factory):
 def test_no_op(filenames_dir_factory):
     manager = svip.migration.MigrationManager(filenames_dir_factory())
 
-    versions = manager.get_versions(current=None, target=None)
+    versions = manager.get_versions(
+        current=semver.Version('0.0.0'),
+        target=semver.Version('0.0.0'),
+    )
     assert versions == []
 
     versions = manager.get_versions(
@@ -77,10 +80,16 @@ def test_version_not_found(filenames_dir_factory):
     manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     with pytest.raises(svip.errors.VersionNotFoundError):
-        manager.get_versions(current=semver.Version('3.4.1'), target=None)
+        manager.get_versions(
+            current=semver.Version('3.4.1'),
+            target=semver.Version('0.0.0'),
+        )
 
     with pytest.raises(svip.errors.VersionNotFoundError):
-        manager.get_versions(target=semver.Version('0.1.1'), current=None)
+        manager.get_versions(
+            current=semver.Version('0.0.0'),
+            target=semver.Version('0.1.1'),
+        )
 
     with pytest.raises(svip.errors.VersionNotFoundError):
         # An exception must be raised even if current and target are the same
@@ -95,7 +104,10 @@ def test_empty_dir(tmp_path):
     with pytest.raises(svip.errors.VersionNotFoundError):
         # Testing with any version here. Just to make sure manager reads the
         # empty directory
-        manager.get_versions(current=None, target=semver.Version('1.0.0'))
+        manager.get_versions(
+            current=semver.Version('0.0.0'),
+            target=semver.Version('1.0.0'),
+        )
 
 
 def test_partial_version_strings(filenames_dir_factory, datadir):
@@ -103,7 +115,7 @@ def test_partial_version_strings(filenames_dir_factory, datadir):
         filenames_dir_factory('partial-versions', inherit_from=None)
     )
     versions = manager.get_versions(
-        current=None,
+        current=semver.Version('0.0.0'),
         target=manager.get_latest_match(semver.NpmSpec('*')),
     )
     expected_versions = [

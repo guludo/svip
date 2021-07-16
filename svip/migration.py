@@ -24,6 +24,9 @@ import semantic_version as semver
 from . import errors
 
 
+V0 = semver.Version('0.0.0')
+
+
 class MigrationStep(abc.ABC):
     """
     Abstract base class responsible for migration steps. Subclasses implement
@@ -116,7 +119,7 @@ class MigrationManager:
         """
         self.__read_migrations_dir()
 
-        v = self.__versions[-1] if self.__versions else semver.Version('0.0.0')
+        v = self.__versions[-1] if self.__versions else V0
 
         if bump_type == BumpType.MAJOR:
             next_version = v.next_major()
@@ -199,23 +202,23 @@ class MigrationManager:
         from `current` to `target`. The sequence will be in increasing order if
         ``current < target` and in decreasing order otherwise.
 
-        Note that a ``None`` value for a version represents the very first
-        state of the application.
+        Note that ``semantic_version.Version('0.0.0')`` as value for a version
+        represents the very first state of the application.
         """
         self.__read_migrations_dir()
 
-        if current is not None and current not in self.__version_indices:
+        if current != V0 and current not in self.__version_indices:
             msg = f'no migration step found for {current}'
             raise errors.VersionNotFoundError(msg)
 
-        if target is not None and target not in self.__version_indices:
+        if target != V0 and target not in self.__version_indices:
             msg = f'no migration step found for {target}'
             raise errors.VersionNotFoundError(msg)
 
         if current == target:
             return []
 
-        if current is None or target is not None and current < target:
+        if current < target:
             a = current
             b = target
             is_upgrade = True
@@ -224,7 +227,7 @@ class MigrationManager:
             b = current
             is_upgrade = False
 
-        slice_start = 0 if a is None else (self.__version_indices[a] + 1)
+        slice_start = 0 if a == V0 else (self.__version_indices[a] + 1)
         slice_end = self.__version_indices[b] + 1
         sliced_versions = self.__versions[slice_start:slice_end]
         r = sliced_versions if is_upgrade else reversed(sliced_versions)
@@ -255,7 +258,6 @@ class MigrationManager:
         :returns: an iterable containing the sequence of migration steps
           necessary for the migration.
         """
-        is_upgrade = current is None or target is not None and current < target
         versions = self.get_versions(current=current, target=target)
 
         # For each version, load the python code, create a subclass of
@@ -288,7 +290,7 @@ class MigrationManager:
                 def down(self):
                     return step_globals['down']()
                 class_dict['down'] = down
-            elif not is_upgrade:
+            elif target < current:
                 msg = f'downgrade is not possible because {step_path} does not define the function down()'
                 raise errors.IrreversibleStepError(msg)
 
