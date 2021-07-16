@@ -34,6 +34,16 @@ class MigrationStep(abc.ABC):
     ``up()`` method; and may also support a downgrade by overriding the
     ``down()`` method.
     """
+    def __init__(self):
+        self.metadata = {}
+        """
+        Metadata about this migration step.
+        """
+
+        self.version = None
+        """
+        Version for which this step is.
+        """
 
     @abc.abstractmethod
     def up(self):
