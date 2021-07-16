@@ -18,6 +18,11 @@ import svip.migration
             r'^.*v0\.foo\.0__step-with-invalid-version-string\.py contains an invalid version string: .*$',
         ),
         (
+            'with-v0.0.0',
+            ValueError,
+            r'.*: version 0\.0\.0 not allowed in migration steps$',
+        ),
+        (
             'with-unrecognized-script',
             svip.errors.UnrecognizedScriptFound,
             r'^found the following unrecognized scripts in .*: \{PosixPath\(\'.*/v4\.0\.0--invalid-for-using-hyphens-instead-of-underscores-after-version-string\.py\'\)\}$'

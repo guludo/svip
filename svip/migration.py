@@ -346,6 +346,8 @@ class MigrationManager:
                     prerelease=parsed[3],
                     build=parsed[4],
                 )
+                if version == V0:
+                    raise ValueError('version 0.0.0 not allowed in migration steps')
             except ValueError as e:
                 msg = f'{path} contains an invalid version string: {e}'
                 raise ValueError(msg) from e
