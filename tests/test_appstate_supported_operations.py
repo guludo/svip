@@ -1,13 +1,20 @@
 import svip.appstate
 
+class AppStateDummy(svip.appstate.AppStateBackend):
+    def set_version(self, *k, **kw):
+        pass
+
+    def get_version(self, *k, **kw):
+        pass
+
 
 def test_supports_backup():
-    class AppStateWithoutBackup(svip.appstate.AppStateBackend):
+    class AppStateWithoutBackup(AppStateDummy):
         pass
 
     assert AppStateWithoutBackup().supports_backup() == False
 
-    class AppStateWithBackup(svip.appstate.AppStateBackend):
+    class AppStateWithBackup(AppStateDummy):
         def backup():
             pass
 
@@ -15,12 +22,12 @@ def test_supports_backup():
 
 
 def test_supports_transaction():
-    class AppStateWithoutTransaction(svip.appstate.AppStateBackend):
+    class AppStateWithoutTransaction(AppStateDummy):
         pass
 
     assert AppStateWithoutTransaction().supports_transaction() == False
 
-    class AppStateWithTransaction(svip.appstate.AppStateBackend):
+    class AppStateWithTransaction(AppStateDummy):
         def transaction():
             pass
 

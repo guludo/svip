@@ -2,14 +2,15 @@
 This module provides the class ``SVIP`` which models de central object to be
 used for performing common operations of SVIP.
 """
+import contextlib
 import typing as T
 
 import semantic_version as semver
 
 from . import (
     appstate,
+    errors,
     migration,
-    versionstate,
 )
 
 
@@ -44,20 +45,16 @@ class SVIP:
     """
 
     def __init__(self,
-            vsb: versionstate.VersionStateBackend,
             asb: appstate.AppStateBackend,
             conf: SVIPConf = SVIPConf()
         ):
         """
         Initialize the object.
 
-        :param vsb: the back end to be used for loading and storing state about
-          the version of the application's schema.
-
         :param asb: the back end to be used for performing operations on the
-          application's state during a migration. Those include generating and
-          restoring backup as well as encapsulating the migration process in a
-          transaction.
+          application's state during a migration. Those include getting and
+          updating version information; generating and restoring backup; and
+          encapsulating the migration process in a transaction.
 
         :param conf: the configuration object.
         """
