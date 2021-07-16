@@ -5,8 +5,8 @@ import svip.errors
 import svip.migration
 
 
-def test_upgrade(valid_step_filenames_dir):
-    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
+def test_upgrade(filenames_dir_factory):
+    manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     versions = manager.get_versions(
         current=None,
@@ -33,8 +33,8 @@ def test_upgrade(valid_step_filenames_dir):
     assert versions == expected_versions
 
 
-def test_downgrade(valid_step_filenames_dir):
-    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
+def test_downgrade(filenames_dir_factory):
+    manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     versions = manager.get_versions(
         current=semver.Version('0.1.2'),
@@ -60,8 +60,8 @@ def test_downgrade(valid_step_filenames_dir):
     assert versions == expected_versions
 
 
-def test_no_op(valid_step_filenames_dir):
-    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
+def test_no_op(filenames_dir_factory):
+    manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     versions = manager.get_versions(current=None, target=None)
     assert versions == []
@@ -73,8 +73,8 @@ def test_no_op(valid_step_filenames_dir):
     assert versions == []
 
 
-def test_version_not_found(valid_step_filenames_dir):
-    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
+def test_version_not_found(filenames_dir_factory):
+    manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     with pytest.raises(svip.errors.VersionNotFoundError):
         manager.get_versions(current=semver.Version('3.4.1'), target=None)
@@ -98,8 +98,10 @@ def test_empty_dir(tmp_path):
         manager.get_versions(current=None, target=semver.Version('1.0.0'))
 
 
-def test_partial_version_strings(datadir):
-    manager = svip.migration.MigrationManager(datadir / 'partial-versions')
+def test_partial_version_strings(filenames_dir_factory, datadir):
+    manager = svip.migration.MigrationManager(
+        filenames_dir_factory('partial-versions', inherit_from=None)
+    )
     versions = manager.get_versions(
         current=None,
         target=manager.get_latest_match(semver.NpmSpec('*')),

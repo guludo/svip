@@ -11,11 +11,6 @@ def datadir():
 
 
 @pytest.fixture
-def valid_step_filenames_dir(datadir):
-    return datadir / 'valid-step-filenames'
-
-
-@pytest.fixture
 def merge_steps_dirs(tmp_path):
     """
     Fixture that returns a factory to merge steps from one or more directories
@@ -37,4 +32,14 @@ def merge_steps_dirs(tmp_path):
                 dirs_exist_ok=True,
             )
         return dstdir
+    return factory
+
+
+@pytest.fixture
+def filenames_dir_factory(datadir, merge_steps_dirs):
+    base = datadir / 'step-filenames' / 'valid-step-filenames'
+    def factory(*names, inherit_from=base):
+        args = [inherit_from] if inherit_from else []
+        args += [datadir / 'step-filenames' / name for name in names]
+        return merge_steps_dirs(*args)
     return factory

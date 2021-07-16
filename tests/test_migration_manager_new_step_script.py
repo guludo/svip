@@ -1,18 +1,10 @@
-import shutil
-
 import semantic_version as semver
 
 import svip.migration
 
 
-def test_script_content(valid_step_filenames_dir, tmp_path):
-    shutil.copytree(
-        valid_step_filenames_dir,
-        tmp_path,
-        dirs_exist_ok=True,
-    )
-
-    manager = svip.migration.MigrationManager(tmp_path)
+def test_script_content(filenames_dir_factory):
+    manager = svip.migration.MigrationManager(filenames_dir_factory())
     script_path, _ = manager.new_step_script(
         name='testing minor  bump',
         bump_type=svip.migration.BumpType.MINOR,
@@ -36,14 +28,9 @@ def test_script_content(valid_step_filenames_dir, tmp_path):
     assert script_path.read_text() == expected_content
 
 
-def test_in_existing_dir(valid_step_filenames_dir, tmp_path):
-    shutil.copytree(
-        valid_step_filenames_dir,
-        tmp_path,
-        dirs_exist_ok=True,
-    )
-
-    manager = svip.migration.MigrationManager(tmp_path)
+def test_in_existing_dir(filenames_dir_factory):
+    dir_path = filenames_dir_factory()
+    manager = svip.migration.MigrationManager(dir_path)
 
     latest_before_new_steps = manager.get_latest_match(semver.NpmSpec('*'))
     versions_before_new_steps = manager.get_versions(
@@ -55,7 +42,7 @@ def test_in_existing_dir(valid_step_filenames_dir, tmp_path):
         name='testing minor  bump',
         bump_type=svip.migration.BumpType.MINOR,
     )
-    assert script_path == tmp_path / 'v2.66.0__testing-minor--bump.py'
+    assert script_path == dir_path / 'v2.66.0__testing-minor--bump.py'
     assert version == semver.Version('2.66.0')
     assert script_path.is_file()
 
@@ -63,7 +50,7 @@ def test_in_existing_dir(valid_step_filenames_dir, tmp_path):
         name=' testing a major bump',
         bump_type=svip.migration.BumpType.MAJOR,
     )
-    assert script_path == tmp_path / 'v3.0.0__-testing-a-major-bump.py'
+    assert script_path == dir_path / 'v3.0.0__-testing-a-major-bump.py'
     assert version == semver.Version('3.0.0')
     assert script_path.is_file()
 
@@ -71,7 +58,7 @@ def test_in_existing_dir(valid_step_filenames_dir, tmp_path):
         name='and now a patch bump ',
         bump_type=svip.migration.BumpType.PATCH,
     )
-    assert script_path == tmp_path / 'v3.0.1__and-now-a-patch-bump-.py'
+    assert script_path == dir_path / 'v3.0.1__and-now-a-patch-bump-.py'
     assert version == semver.Version('3.0.1')
     assert script_path.is_file()
 

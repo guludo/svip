@@ -5,8 +5,8 @@ import svip.errors
 import svip.migration
 
 
-def test_not_found(valid_step_filenames_dir):
-    manager = svip.migration.MigrationManager(valid_step_filenames_dir)
+def test_not_found(filenames_dir_factory):
+    manager = svip.migration.MigrationManager(filenames_dir_factory())
 
     with pytest.raises(svip.errors.VersionNotFoundError):
         manager.get_latest_match(semver.NpmSpec('^1.1.0'))
