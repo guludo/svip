@@ -99,3 +99,23 @@ class AppStateBackend(abc.ABC):
         :returns: a context manager for the transaction.
         """
         raise NotImplementedError()
+
+    def supports_backup(self) -> bool:
+        """
+        Return true if backup is supported by this back end and false
+        otherwise.
+
+        A back end is considered to support backup operations if the
+        ``backup()``  method is overriden by the subclass.
+        """
+        return self.backup.__func__ != AppStateBackend.backup
+
+    def supports_transaction(self) -> bool:
+        """
+        Return true if transaction is supported by this back end and false
+        otherwise.
+
+        A back end is considered to support transaction if the
+        ``transaction()`` method is overriden by the subclass.
+        """
+        return self.transaction.__func__ != AppStateBackend.transaction
