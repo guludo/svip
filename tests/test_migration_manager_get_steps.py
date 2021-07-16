@@ -5,21 +5,8 @@ import svip.errors
 import svip.migration
 
 
-@pytest.fixture
-def steps_dir(datadir, merge_steps_dirs):
-    """
-    Generate the directory with merged steps.
-    """
-    def factory(srcdir=None):
-        return merge_steps_dirs(
-            datadir / 'get_steps' / 'base-files',
-            (datadir / 'get_steps' / srcdir) if srcdir else None,
-        )
-    return factory
-
-
-def test_valid_formats(steps_dir):
-    manager = svip.migration.MigrationManager(steps_dir())
+def test_valid_formats(get_steps_dir_factory):
+    manager = svip.migration.MigrationManager(get_steps_dir_factory())
 
     steps = manager.get_steps(
         current=None,
@@ -30,8 +17,10 @@ def test_valid_formats(steps_dir):
     assert ids_from_metadata == expected_ids
 
 
-def test_irreversible_step(steps_dir):
-    manager = svip.migration.MigrationManager(steps_dir('irreversible-step'))
+def test_irreversible_step(get_steps_dir_factory):
+    manager = svip.migration.MigrationManager(
+        get_steps_dir_factory('irreversible-step'),
+    )
 
     with pytest.raises(
         svip.errors.IrreversibleStepError,
@@ -63,8 +52,10 @@ def test_irreversible_step(steps_dir):
         ),
     ],
 )
-def test_format_errors(directory, error_class, error_match, steps_dir):
-    manager = svip.migration.MigrationManager(steps_dir(directory))
+def test_format_errors(directory, error_class, error_match, get_steps_dir_factory):
+    manager = svip.migration.MigrationManager(
+        get_steps_dir_factory(directory),
+    )
 
     with pytest.raises(
         error_class,

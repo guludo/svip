@@ -43,3 +43,13 @@ def filenames_dir_factory(datadir, merge_steps_dirs):
         args += [datadir / 'step-filenames' / name for name in names]
         return merge_steps_dirs(*args)
     return factory
+
+
+@pytest.fixture
+def get_steps_dir_factory(datadir, merge_steps_dirs):
+    base = datadir / 'get_steps' / 'base-files'
+    def factory(*names, inherit_from=base):
+        args = [inherit_from] if inherit_from else []
+        args += [datadir / 'get_steps' / name for name in names]
+        return merge_steps_dirs(*args)
+    return factory
