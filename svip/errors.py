@@ -21,6 +21,10 @@ class IncompatibleVersionError(ErrorBase):
     pass
 
 
+class InvalidStepSource(ErrorBase):
+    pass
+
+
 class IrreversibleStepError(ErrorBase):
     pass
 

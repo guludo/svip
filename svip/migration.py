@@ -14,6 +14,7 @@ This module provides classes related to the migration process.
 """
 from collections.abc import Iterable
 import abc
+import collections.abc
 import enum
 import pathlib
 import typing as T
@@ -248,10 +249,64 @@ class MigrationManager:
         :raises IrreversibleStepError: if the migration is a downgrade and
           one of the steps found does not support a downgrade operation.
 
+        :raises InvalidStepSource: if there is a problem with the source code
+          of the script for a migration step
+
         :returns: an iterable containing the sequence of migration steps
           necessary for the migration.
         """
-        raise NotImplementedError()
+        is_upgrade = current is None or target is not None and current < target
+        versions = self.get_versions(current=current, target=target)
+
+        # For each version, load the python code, create a subclass of
+        # MigrationStep and instantiate it
+        for version in versions:
+            i = self.__version_indices[version]
+
+            # Load the script
+            step_path = self.__steps_paths[i]
+            step_code = step_path.read_text()
+            step_globals = {}
+            try:
+                exec(step_code, step_globals)
+            except Exception as e:
+                raise errors.InvalidStepSource(f'bad Python code for {step_path}: {e}')
+
+            # Create the subclass of MigrationStep
+            class_name = step_path.stem
+            class_bases = (MigrationStep,)
+            class_dict = {}
+
+            if 'up' not in step_globals:
+                raise errors.InvalidStepSource(f'missing function up() in {step_path}')
+            else:
+                def up(self):
+                    return step_globals['up']()
+                class_dict['up'] = up
+
+            if 'down' in step_globals:
+                def down(self):
+                    return step_globals['down']()
+                class_dict['down'] = down
+            elif not is_upgrade:
+                msg = f'downgrade is not possible because {step_path} does not define the function down()'
+                raise errors.IrreversibleStepError(msg)
+
+            cls = type(class_name, class_bases, class_dict)
+
+            # Instantiate the step and initialize
+            step = cls()
+
+            step.version = version
+
+            if 'metadata' in step_globals:
+                metadata = step_globals['metadata']
+                if not isinstance(metadata, collections.abc.Mapping):
+                    msg = f'metadata in {step_path} must be a mapping (e.g. a dict)'
+                    raise errors.InvalidStepSource(msg)
+                step.metadata.update(metadata)
+
+            yield step
 
     def __read_migrations_dir(self):
         """
