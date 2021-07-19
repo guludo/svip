@@ -17,6 +17,16 @@ def test_valid_formats(get_steps_dir_factory):
     assert ids_from_metadata == expected_ids
 
 
+def test_with_single_parameters(get_steps_dir_factory):
+    manager = svip.migration.MigrationManager(
+        get_steps_dir_factory('with-single-parameter')
+    )
+    list(manager.get_steps(
+        current=semver.Version('0.0.0'),
+        target=manager.get_latest_match(semver.NpmSpec('*')),
+    ))
+
+
 def test_irreversible_step(get_steps_dir_factory):
     manager = svip.migration.MigrationManager(
         get_steps_dir_factory('irreversible-step'),
@@ -49,6 +59,26 @@ def test_irreversible_step(get_steps_dir_factory):
             'invalid-metadata-type',
             svip.errors.InvalidStepSource,
             r'^metadata in .*/v3\.1__invalid-metadata-type.py must be a mapping \(e.g. a dict\)$',
+        ),
+        (
+            'up-not-callable',
+            svip.errors.InvalidStepSource,
+            r'^variable "up" is not a callable in .*/v3\.1__up-not-callable\.py$'
+        ),
+        (
+            'down-not-callable',
+            svip.errors.InvalidStepSource,
+            r'^variable "down" is not a callable in .*/v3\.1__down-not-callable\.py$'
+        ),
+        (
+            'up-invalid-signature',
+            svip.errors.InvalidStepSource,
+            r'function up\(\) in .*/v3\.1__up-invalid-signature\.py contains an invalid signature$',
+        ),
+        (
+            'down-invalid-signature',
+            svip.errors.InvalidStepSource,
+            r'function down\(\) in .*/v3\.1__down-invalid-signature\.py contains an invalid signature$',
         ),
     ],
 )

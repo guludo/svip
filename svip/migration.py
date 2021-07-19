@@ -16,6 +16,7 @@ from collections.abc import Iterable
 import abc
 import collections.abc
 import enum
+import inspect
 import pathlib
 import typing as T
 
@@ -291,13 +292,41 @@ class MigrationManager:
             if 'up' not in step_globals:
                 raise errors.InvalidStepSource(f'missing function up() in {step_path}')
             else:
-                def up(self):
-                    return step_globals['up']()
+                try:
+                    sig = inspect.signature(step_globals['up'])
+                except TypeError:
+                    msg = f'variable "up" is not a callable in {step_path}'
+                    raise errors.InvalidStepSource(msg)
+
+                if len(sig.parameters) == 1:
+                    def up(self):
+                        return step_globals['up'](self)
+                elif len(sig.parameters) == 0:
+                    def up(self):
+                        return step_globals['up']()
+                else:
+                    msg = f'function up() in {step_path} contains an invalid signature'
+                    raise errors.InvalidStepSource(msg)
+
                 class_dict['up'] = up
 
             if 'down' in step_globals:
-                def down(self):
-                    return step_globals['down']()
+                try:
+                    sig = inspect.signature(step_globals['down'])
+                except TypeError:
+                    msg = f'variable "down" is not a callable in {step_path}'
+                    raise errors.InvalidStepSource(msg)
+
+                if len(sig.parameters) == 1:
+                    def down(self):
+                        return step_globals['down'](self)
+                elif len(sig.parameters) == 0:
+                    def down(self):
+                        return step_globals['down']()
+                else:
+                    msg = f'function down() in {step_path} contains an invalid signature'
+                    raise errors.InvalidStepSource(msg)
+
                 class_dict['down'] = down
             elif target < current:
                 msg = f'downgrade is not possible because {step_path} does not define the function down()'
