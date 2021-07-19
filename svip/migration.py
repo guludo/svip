@@ -377,16 +377,11 @@ class MigrationManager:
         for i, path in enumerate(paths):
             version_str = path.name[1:path.name.index('__')]
             try:
-                parsed = semver.Version.parse(version_str, partial=True)
-                version = semver.Version(
-                    major=parsed[0] or 0,
-                    minor=parsed[1] or 0,
-                    patch=parsed[2] or 0,
-                    prerelease=parsed[3],
-                    build=parsed[4],
-                )
+                version = semver.Version.coerce(version_str)
                 if version == V0:
                     raise ValueError('version 0.0.0 not allowed in migration steps')
+                if version.prerelease or version.build:
+                    raise ValueError('only major, minor and patch compoments are allowed')
             except ValueError as e:
                 msg = f'{path} contains an invalid version string: {e}'
                 raise ValueError(msg) from e
