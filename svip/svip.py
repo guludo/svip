@@ -36,7 +36,7 @@ class SVIPConf:
         :param migrations_dir: path to the directory where migration scripts
           are located.
         """
-        self.migrations_dir = migrations_dir
+        self.migrations_dir = pathlib.Path(migrations_dir)
 
 
 class SVIP:
