@@ -49,6 +49,12 @@ class MigrationStep(abc.ABC):
         Version for which this step is.
         """
 
+        self.ctx = None
+        """
+        Context variable, this can be used so that data and resources might be
+        passed down by the main stript to migration steps.
+        """
+
     @abc.abstractmethod
     def up(self):
         """
@@ -83,11 +89,13 @@ class MigrationManager:
     steps.
     """
 
-    def __init__(self, path: pathlib.Path):
+    def __init__(self, path: pathlib.Path, ctx: T.Any = None):
         """
         Initialize this object.
 
         :param path: path to the directory containing migration step scripts.
+        :param ctx: variable to be passed down to the ``ctx`` property of
+          migration steps.
         """
         self.__path = path
 
@@ -96,6 +104,7 @@ class MigrationManager:
         self.__version_indices = None
         self.__versions = None
         self.__steps_paths = None
+        self.__ctx = ctx
 
     def new_step_script(self,
             name: str,
@@ -300,6 +309,7 @@ class MigrationManager:
             step = cls()
 
             step.version = version
+            step.ctx = self.__ctx
 
             if 'metadata' in step_globals:
                 metadata = step_globals['metadata']
