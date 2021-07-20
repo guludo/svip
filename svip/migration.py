@@ -243,6 +243,86 @@ class MigrationManager:
         r = sliced_versions if is_upgrade else reversed(sliced_versions)
         return list(r)
 
+    def __create_step_object(self,
+        version: semver.Version,
+        is_upgrade: bool,
+    ) -> MigrationStep:
+        i = self.__version_indices[version]
+
+        # Load the script
+        step_path = self.__steps_paths[i]
+        step_code = step_path.read_text()
+        step_globals = {}
+        try:
+            exec(step_code, step_globals)
+        except Exception as e:
+            raise errors.InvalidStepSource(f'bad Python code for {step_path}: {e}')
+
+        # Create the subclass of MigrationStep
+        class_name = step_path.stem
+        class_bases = (MigrationStep,)
+        class_dict = {}
+
+        if 'up' not in step_globals:
+            raise errors.InvalidStepSource(f'missing function up() in {step_path}')
+        else:
+            try:
+                sig = inspect.signature(step_globals['up'])
+            except TypeError:
+                msg = f'variable "up" is not a callable in {step_path}'
+                raise errors.InvalidStepSource(msg)
+
+            if len(sig.parameters) == 1:
+                def up(self):
+                    return step_globals['up'](self)
+            elif len(sig.parameters) == 0:
+                def up(self):
+                    return step_globals['up']()
+            else:
+                msg = f'function up() in {step_path} contains an invalid signature'
+                raise errors.InvalidStepSource(msg)
+
+            class_dict['up'] = up
+
+        if 'down' in step_globals:
+            try:
+                sig = inspect.signature(step_globals['down'])
+            except TypeError:
+                msg = f'variable "down" is not a callable in {step_path}'
+                raise errors.InvalidStepSource(msg)
+
+            if len(sig.parameters) == 1:
+                def down(self):
+                    return step_globals['down'](self)
+            elif len(sig.parameters) == 0:
+                def down(self):
+                    return step_globals['down']()
+            else:
+                msg = f'function down() in {step_path} contains an invalid signature'
+                raise errors.InvalidStepSource(msg)
+
+            class_dict['down'] = down
+        elif not is_upgrade:
+            msg = f'downgrade is not possible because {step_path} does not define the function down()'
+            raise errors.IrreversibleStepError(msg)
+
+        cls = type(class_name, class_bases, class_dict)
+
+        # Instantiate the step and initialize
+        step = cls()
+
+        step.version = version
+        step.ctx = self.__ctx
+
+        if 'metadata' in step_globals:
+            metadata = step_globals['metadata']
+            if not isinstance(metadata, collections.abc.Mapping):
+                msg = f'metadata in {step_path} must be a mapping (e.g. a dict)'
+                raise errors.InvalidStepSource(msg)
+            step.metadata.update(metadata)
+
+        return step
+
     def get_steps(self,
             current: semver.Version,
             target: semver.Version,
@@ -269,85 +349,12 @@ class MigrationManager:
           necessary for the migration.
         """
         versions = self.get_versions(current=current, target=target)
+        is_upgrade = target > current
 
         # For each version, load the python code, create a subclass of
         # MigrationStep and instantiate it
         for version in versions:
-            i = self.__version_indices[version]
-
-            # Load the script
-            step_path = self.__steps_paths[i]
-            step_code = step_path.read_text()
-            step_globals = {}
-            try:
-                exec(step_code, step_globals)
-            except Exception as e:
-                raise errors.InvalidStepSource(f'bad Python code for {step_path}: {e}')
-
-            # Create the subclass of MigrationStep
-            class_name = step_path.stem
-            class_bases = (MigrationStep,)
-            class_dict = {}
-
-            if 'up' not in step_globals:
-                raise errors.InvalidStepSource(f'missing function up() in {step_path}')
-            else:
-                try:
-                    sig = inspect.signature(step_globals['up'])
-                except TypeError:
-                    msg = f'variable "up" is not a callable in {step_path}'
-                    raise errors.InvalidStepSource(msg)
-
-                if len(sig.parameters) == 1:
-                    def up(self):
-                        return step_globals['up'](self)
-                elif len(sig.parameters) == 0:
-                    def up(self):
-                        return step_globals['up']()
-                else:
-                    msg = f'function up() in {step_path} contains an invalid signature'
-                    raise errors.InvalidStepSource(msg)
-
-                class_dict['up'] = up
-
-            if 'down' in step_globals:
-                try:
-                    sig = inspect.signature(step_globals['down'])
-                except TypeError:
-                    msg = f'variable "down" is not a callable in {step_path}'
-                    raise errors.InvalidStepSource(msg)
-
-                if len(sig.parameters) == 1:
-                    def down(self):
-                        return step_globals['down'](self)
-                elif len(sig.parameters) == 0:
-                    def down(self):
-                        return step_globals['down']()
-                else:
-                    msg = f'function down() in {step_path} contains an invalid signature'
-                    raise errors.InvalidStepSource(msg)
-
-                class_dict['down'] = down
-            elif target < current:
-                msg = f'downgrade is not possible because {step_path} does not define the function down()'
-                raise errors.IrreversibleStepError(msg)
-
-            cls = type(class_name, class_bases, class_dict)
-
-            # Instantiate the step and initialize
-            step = cls()
-
-            step.version = version
-            step.ctx = self.__ctx
-
-            if 'metadata' in step_globals:
-                metadata = step_globals['metadata']
-                if not isinstance(metadata, collections.abc.Mapping):
-                    msg = f'metadata in {step_path} must be a mapping (e.g. a dict)'
-                    raise errors.InvalidStepSource(msg)
-                step.metadata.update(metadata)
-
-            yield step
+            yield self.__create_step_object(version, is_upgrade)
 
     def __read_migrations_dir(self):
         """
