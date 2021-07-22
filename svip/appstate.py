@@ -32,7 +32,7 @@ class AppStateBackup(abc.ABC):
         An exception must be raised when an error occurs while restoring the
         backup.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def info(self) -> str:
         """
@@ -129,7 +129,7 @@ class AppStateBackend(abc.ABC):
           that tells whether the update was done; the value of
           ``current_before`` and the value of ``target_before``.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     @abc.abstractmethod
     def get_version(self) -> T.Tuple[semver.Version, semver.Version]:
@@ -139,7 +139,7 @@ class AppStateBackend(abc.ABC):
         :returns: a 2-element tuple containing the current and target versions,
           respectively.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def get_version_history(self) -> T.List[T.Tuple[semver.Version, datetime.datetime]]:
         """
@@ -149,7 +149,7 @@ class AppStateBackend(abc.ABC):
             the timestamp of the update. The list is sorted in chronological
             order.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def backup(self, info: migration.MigrationInfo) -> AppStateBackup:
         """
@@ -164,7 +164,7 @@ class AppStateBackend(abc.ABC):
 
         :returns: an object representing the backup.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def transaction(self) -> contextlib.AbstractContextManager:
         """
@@ -179,7 +179,7 @@ class AppStateBackend(abc.ABC):
 
         :returns: a context manager for the transaction.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def supports_backup(self) -> bool:
         """
