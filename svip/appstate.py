@@ -242,7 +242,7 @@ class AppStateBackend(abc.ABC):
         otherwise.
 
         A back end is considered to support backup operations if the
-        ``backup()``  method is overriden by the subclass.
+        ``backup()``  method is overridden by the subclass.
         """
         return self.backup.__func__ != AppStateBackend.backup
 
