@@ -16,6 +16,7 @@ from collections.abc import Iterable
 import abc
 import collections.abc
 import enum
+import importlib
 import inspect
 import pathlib
 import typing as T
@@ -249,12 +250,15 @@ class MigrationManager:
     ) -> MigrationStep:
         i = self.__version_indices[version]
 
-        # Load the script
+        # Load the module
         step_path = self.__steps_paths[i]
-        step_code = step_path.read_text()
-        step_globals = {}
+        spec = importlib.util.spec_from_file_location(
+            f'step_for_v_{version.major}_{version.minor}_{version.patch}',
+            step_path,
+        )
+        module = importlib.util.module_from_spec(spec)
         try:
-            exec(step_code, step_globals)
+            spec.loader.exec_module(module)
         except Exception as e:
             raise errors.InvalidStepSource(f'bad Python code for {step_path}: {e}')
 
@@ -263,40 +267,40 @@ class MigrationManager:
         class_bases = (MigrationStep,)
         class_dict = {}
 
-        if 'up' not in step_globals:
+        if not hasattr(module, 'up'):
             raise errors.InvalidStepSource(f'missing function up() in {step_path}')
         else:
             try:
-                sig = inspect.signature(step_globals['up'])
+                sig = inspect.signature(module.up)
             except TypeError:
                 msg = f'variable "up" is not a callable in {step_path}'
                 raise errors.InvalidStepSource(msg)
 
             if len(sig.parameters) == 1:
                 def up(self):
-                    return step_globals['up'](self)
+                    return module.up(self)
             elif len(sig.parameters) == 0:
                 def up(self):
-                    return step_globals['up']()
+                    return module.up()
             else:
                 msg = f'function up() in {step_path} contains an invalid signature'
                 raise errors.InvalidStepSource(msg)
 
             class_dict['up'] = up
 
-        if 'down' in step_globals:
+        if hasattr(module, 'down'):
             try:
-                sig = inspect.signature(step_globals['down'])
+                sig = inspect.signature(module.down)
             except TypeError:
                 msg = f'variable "down" is not a callable in {step_path}'
                 raise errors.InvalidStepSource(msg)
 
             if len(sig.parameters) == 1:
                 def down(self):
-                    return step_globals['down'](self)
+                    return module.down(self)
             elif len(sig.parameters) == 0:
                 def down(self):
-                    return step_globals['down']()
+                    return module.down()
             else:
                 msg = f'function down() in {step_path} contains an invalid signature'
                 raise errors.InvalidStepSource(msg)
@@ -314,12 +318,11 @@ class MigrationManager:
         step.version = version
         step.ctx = self.__ctx
 
-        if 'metadata' in step_globals:
-            metadata = step_globals['metadata']
-            if not isinstance(metadata, collections.abc.Mapping):
+        if hasattr(module, 'metadata'):
+            if not isinstance(module.metadata, collections.abc.Mapping):
                 msg = f'metadata in {step_path} must be a mapping (e.g. a dict)'
                 raise errors.InvalidStepSource(msg)
-            step.metadata.update(metadata)
+            step.metadata.update(module.metadata)
 
         return step
 
