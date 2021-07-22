@@ -49,6 +49,32 @@ class AppStateBackup(abc.ABC):
         return repr(self)
 
 
+class AppStateTransaction(contextlib.AbstractContextManager):
+    """
+    This is a class to represent a transaction for the application state.
+
+    Subclasses must implement the API for context managers, where
+    ``__enter__()`` marks the start of the transaction and ``__exit__()`` marks
+    the end of the transaction. If any error is passed to ``__exit__()``, then
+    the transaction must rollback, otherwise it must commit the changes. In
+    case of a rollback, the method `rollback_successful()` must tell if the
+    rollback was successful.
+
+    An ASB that supports transactions must provide a subclass of
+    `AppStateTransaction` and return an instance of such a class as a result of
+    `AppStateBackend.transaction()`.
+    """
+
+    @abc.abstractmethod
+    def rollback_successful(self) -> bool:
+        """
+        Return true if this transaction rolled back successfully and false
+        otherwise. This method is only applicable if the transaction has
+        failed.
+        """
+        raise NotImplementedError() # pragma: no cover
+
+
 class AppStateBackend(abc.ABC):
     """
     This is the abstract base class for application state back ends. The
@@ -141,6 +167,35 @@ class AppStateBackend(abc.ABC):
         """
         raise NotImplementedError() # pragma: no cover
 
+    @abc.abstractmethod
+    def register_inconsistency(self, info: str, backup_info: str = None):
+        """
+        Mark the application state to be inconsistent. This function is called
+        a migration fails and restoring the application state to what is was
+        prior to the migration process is not possible.
+
+        :param info: a string describing the problem.
+        :param backup_info: a string information about the backup made before
+          running the migration, if any.
+        """
+        raise NotImplementedError() # pragma: no cover
+
+    @abc.abstractmethod
+    def get_inconsistency(self) -> T.Union[None, T.Tuple[str, str]]:
+        """
+        Return a 2-element tuple containing the ``info`` and ``backup_info``
+        values of a previous call to `register_inconsistency()`. If there is no
+        registered inconsistency, then return None.
+        """
+        raise NotImplementedError() # pragma: no cover
+
+    @abc.abstractmethod
+    def clear_inconsistency(self):
+        """
+        Clear the registered inconsistency if any.
+        """
+        raise NotImplementedError() # pragma: no cover
+
     def get_version_history(self) -> T.List[T.Tuple[semver.Version, datetime.datetime]]:
         """
         Return the history of updates in the schema version as a list.
@@ -166,7 +221,7 @@ class AppStateBackend(abc.ABC):
         """
         raise NotImplementedError() # pragma: no cover
 
-    def transaction(self) -> contextlib.AbstractContextManager:
+    def transaction(self) -> AppStateTransaction:
         """
         Return a context manager to represent a transaction.
 
@@ -177,7 +232,7 @@ class AppStateBackend(abc.ABC):
         ABSs that do not support transactions do not need to override this
         method.
 
-        :returns: a context manager for the transaction.
+        :returns: an object representing the transaction.
         """
         raise NotImplementedError() # pragma: no cover
 
@@ -190,6 +245,14 @@ class AppStateBackend(abc.ABC):
         ``backup()``  method is overriden by the subclass.
         """
         return self.backup.__func__ != AppStateBackend.backup
+
+    def backup_supports_restore(self) -> bool:
+        """
+        Return true if a generated backup implements the method ``restore()``.
+
+        If not overridden, this method returns false by default.
+        """
+        return False
 
     def supports_transaction(self) -> bool:
         """
