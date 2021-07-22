@@ -1,11 +1,18 @@
 import svip.appstate
 
-class AppStateDummy(svip.appstate.AppStateBackend):
-    def set_version(self, *k, **kw):
-        pass
 
-    def get_version(self, *k, **kw):
-        pass
+# A dummy subclass with an empty implementation of each abstract method
+AppStateDummy = type(
+    'AppStateDummy',
+    (svip.appstate.AppStateBackend,),
+    {
+        name: lambda self, *k, **kw: None
+        for name in (
+            k for k, v in vars(svip.appstate.AppStateBackend).items()
+            if k[0].isalpha() and getattr(v, '__isabstractmethod__', False)
+        )
+    },
+)
 
 
 def test_supports_backup():
