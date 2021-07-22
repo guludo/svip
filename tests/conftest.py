@@ -1,8 +1,13 @@
+import contextlib
 import itertools
 import pathlib
 import shutil
+import threading
 
 import pytest
+
+import appstatemock
+import svip.svip
 
 
 @pytest.fixture
@@ -52,4 +57,62 @@ def get_steps_dir_factory(datadir, merge_steps_dirs):
         args = [inherit_from] if inherit_from else []
         args += [datadir / 'get_steps' / name for name in names]
         return merge_steps_dirs(*args)
+    return factory
+
+
+@pytest.fixture
+def migrations_with_appstatemock_dir_factory(datadir, merge_steps_dirs):
+    base = datadir / 'migrations-with-appstatemock' / 'base-migrations'
+    def factory(*names, inherit_from=base):
+        args = [inherit_from] if inherit_from else []
+        args += [datadir / 'migrations-with-appstatemock' / name for name in names]
+        return merge_steps_dirs(*args)
+    return factory
+
+
+@pytest.fixture
+def svip_factory(migrations_with_appstatemock_dir_factory):
+    def factory(dirs=[], ctx_extra={}, appstate=None, **appstatemock_kw):
+        migrations_dir=migrations_with_appstatemock_dir_factory(*dirs)
+        if not appstate:
+            appstate = appstatemock.AppStateMock(**appstatemock_kw)
+        ctx = {'appstate': appstate}
+        ctx.update(ctx_extra)
+        sv = svip.svip.SVIP(
+            asb=appstate.asb,
+            conf=svip.svip.SVIPConf(migrations_dir=migrations_dir),
+            ctx=ctx,
+        )
+        return sv, appstate
+    return factory
+
+
+@pytest.fixture
+def migration_in_progress_factory(svip_factory):
+    @contextlib.contextmanager
+    def factory(target='2.65.921'):
+        reached_wait_point = threading.Event()
+        finished_test = threading.Event()
+        sv1, appstate = svip_factory(
+            dirs=['with-thread-event-wait'],
+            ctx_extra={'events': (reached_wait_point, finished_test)},
+        )
+        sv2, _ = svip_factory(
+            dirs=['with-thread-event-wait'],
+            appstate=appstate,
+        )
+
+        first_migration_thread = threading.Thread(
+            target=sv1.migrate,
+            kwargs={'target': target},
+        )
+        first_migration_thread.start()
+
+        reached_wait_point.wait()
+
+        try:
+            yield sv2, appstate
+        finally:
+            finished_test.set()
+            first_migration_thread.join()
     return factory
