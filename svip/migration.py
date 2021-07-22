@@ -19,6 +19,7 @@ import enum
 import importlib
 import inspect
 import pathlib
+import traceback
 import typing as T
 
 import semantic_version as semver
@@ -259,8 +260,9 @@ class MigrationManager:
         module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(module)
-        except Exception as e:
-            raise errors.InvalidStepSource(f'bad Python code for {step_path}: {e}')
+        except:
+            formatted_error = traceback.format_exc(limit=-1)
+            raise errors.InvalidStepSource(f'bad Python code for {step_path}: {formatted_error}')
 
         # Create the subclass of MigrationStep
         class_name = step_path.stem

@@ -48,7 +48,13 @@ def test_irreversible_step(get_steps_dir_factory):
         (
             'bad-python-code',
             svip.errors.InvalidStepSource,
-            r'^bad Python code for .*/v3\.1__.*$',
+            (
+                r'^bad Python code for .*/v3\.1__bad-python-code\.py: '
+                r'Traceback \(most recent call last\):\n'
+                r'  File ".*/v3\.1__bad-python-code\.py", line 5, in <module>\n'
+                r'    x = 1 / 0\n'
+                r'ZeroDivisionError: division by zero\n$'
+            )
         ),
         (
             'up-not-defined',
