@@ -1,6 +1,6 @@
 import pytest
 
-import svip.errors
+import svip
 
 
 def test_error_migration_in_progress(migration_in_progress_factory):

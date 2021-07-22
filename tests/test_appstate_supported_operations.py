@@ -1,10 +1,10 @@
-import svip.appstate
+import svip
 
 
 # A dummy subclass with an empty implementation of each abstract method
 AppStateDummy = type(
     'AppStateDummy',
-    (svip.appstate.AppStateBackend,),
+    (svip.AppStateBackend,),
     {
         name: lambda self, *k, **kw: None
         for name in (

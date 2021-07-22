@@ -7,7 +7,7 @@ import threading
 import pytest
 
 import appstatemock
-import svip.svip
+import svip
 
 
 @pytest.fixture
@@ -78,9 +78,9 @@ def svip_factory(migrations_with_appstatemock_dir_factory):
             appstate = appstatemock.AppStateMock(**appstatemock_kw)
         ctx = {'appstate': appstate}
         ctx.update(ctx_extra)
-        sv = svip.svip.SVIP(
+        sv = svip.SVIP(
             asb=appstate.asb,
-            conf=svip.svip.SVIPConf(migrations_dir=migrations_dir),
+            conf=svip.SVIPConf(migrations_dir=migrations_dir),
             ctx=ctx,
         )
         return sv, appstate

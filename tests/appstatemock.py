@@ -2,14 +2,14 @@
 This module provides the `AppStateMock` class, which simulates the
 functionality required for application state back ends.
 """
-import svip.appstate
-
 import semantic_version as semver
 
 import copy
 import datetime
 import itertools
 import typing as T
+
+import svip
 
 
 class AppStateMock:
@@ -118,7 +118,7 @@ class AppStateMock:
         the object and assign it to ``self.asb``.
         """
         cls_name = f'AppStateMock{next(self.mock_class_counter)}'
-        cls_bases = (svip.appstate.AppStateBackend,)
+        cls_bases = (svip.AppStateBackend,)
         cls_dict = {}
 
         # A decorator to make things simpler
@@ -182,7 +182,7 @@ class AppStateMock:
         @method(cond=with_backup)
         def backup(asb, info):
 
-            class Backup(svip.appstate.AppStateBackup):
+            class Backup(svip.AppStateBackup):
                 def __init__(bkp, info):
                     bkp.__saved_state = copy_state()
 
@@ -200,7 +200,7 @@ class AppStateMock:
 
         @method(cond=with_transaction)
         def transaction(self):
-            class PseudoTransaction(svip.appstate.AppStateTransaction):
+            class PseudoTransaction(svip.AppStateTransaction):
                 def __init__(trs):
                     trs.__entered = False
                     trs.__rollback_successful = False
