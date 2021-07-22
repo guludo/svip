@@ -66,7 +66,7 @@ class MigrationStep(abc.ABC):
 
         An exception must be raised in case the upgrade is unsuccessful.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     def down(self):
         """
@@ -77,7 +77,7 @@ class MigrationStep(abc.ABC):
         This method must not be overridden if this step does not support a
         downgrade operation.
         """
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
 
 BumpType = enum.Enum('BumpType', ['MAJOR', 'MINOR', 'PATCH'])
