@@ -1,7 +1,6 @@
 import pytest
 import semantic_version as semver
 
-import svip.errors
 import svip.migration
 
 
