@@ -21,6 +21,10 @@ class IncompatibleVersionError(ErrorBase):
     pass
 
 
+class InconsistentStateError(ErrorBase):
+    pass
+
+
 class InvalidStepSource(ErrorBase):
     pass
 
@@ -37,13 +41,21 @@ class MigrationInProgressError(ErrorBase):
     pass
 
 
+class NoGuardrailsError(ErrorBase):
+    pass
+
+
 class RestoreFailedError(ErrorBase):
-    def __init__(self, original_error: Exception):
-        super().__init__()
+    def __init__(self, msg, original_error: Exception):
+        super().__init__(msg)
         self.original_error = original_error
 
 
 class RestoreNotImplementedError(ErrorBase):
+    pass
+
+
+class TransactionFailedError(ErrorBase):
     pass
 
 
