@@ -1,3 +1,4 @@
+import pathlib
 import pytest
 import semantic_version as semver
 
@@ -15,6 +16,27 @@ def test_valid_formats(get_steps_dir_factory):
     ids_from_metadata = [step.metadata['id_for_test'] for step in steps]
     expected_ids = ['v1', 'v2', 'v3', 'v4', 'v5']
     assert ids_from_metadata == expected_ids
+
+
+def test_step_str(get_steps_dir_factory):
+    manager = svip.migration.MigrationManager(get_steps_dir_factory())
+    steps = manager.get_steps(
+        current=semver.Version('0.0.0'),
+        target=manager.get_latest_match(semver.NpmSpec('*')),
+    )
+
+    # When converted to a string, a step returns the string representation of
+    # its path. Since, in this test, paths are based on a temporary directory,
+    # let's just extract the names of each file.
+    names = [pathlib.Path(str(step)).name for step in steps]
+    expected_names = [
+        'v1__first-one.py',
+        'v2__second-step.py',
+        'v3__third-step.py',
+        'v4__fourth-step.py',
+        'v5__fifth-step.py',
+    ]
+    assert names == expected_names
 
 
 def test_with_single_parameters(get_steps_dir_factory):

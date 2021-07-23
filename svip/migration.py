@@ -58,6 +58,11 @@ class MigrationStep(abc.ABC):
         passed down by the main stript to migration steps.
         """
 
+        self.path : pathlib.Path = None
+        """
+        Path to Python script that implements this step.
+        """
+
     @abc.abstractmethod
     def up(self):
         """
@@ -78,6 +83,9 @@ class MigrationStep(abc.ABC):
         downgrade operation.
         """
         raise NotImplementedError() # pragma: no cover
+
+    def __str__(self):
+        return str(self.path)
 
 
 BumpType = enum.Enum('BumpType', ['MAJOR', 'MINOR', 'PATCH'])
@@ -319,6 +327,7 @@ class MigrationManager:
 
         step.version = version
         step.ctx = self.__ctx
+        step.path = step_path
 
         if hasattr(module, 'metadata'):
             if not isinstance(module.metadata, collections.abc.Mapping):
