@@ -13,6 +13,7 @@ from . import (
     appstate,
     errors,
     migration,
+    cli,
 )
 
 
@@ -122,21 +123,11 @@ class SVIP:
             msg = f'version spec {spec} is incompatible with current schema version {current}'
             raise errors.IncompatibleVersionError(msg)
 
-    def cli(self, argv: T.List[str] = None) -> int:
+    def cli(self) -> cli.CLI:
         """
-        Provide a command line interface.
-
-        This function can be used by the main routine of a program to provide
-        a command line interface with subcommands exposing functionalities of
-        SVIP.
-
-        :param argv: the list of `str`s to be used as command line arguments.
-          By default (i.e., if `None` is passed), it uses ``sys.argv[1:]``.
-
-        :returns: the exit status of the CLI. This can be used as argument of
-          ``exit()`` for providing the exit status of the main program.
+        Provide an object for command line interface.
         """
-        raise NotImplementedError()
+        return cli.CLI(self)
 
     def get_migrations_manager(self) -> migration.MigrationManager:
         """
