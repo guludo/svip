@@ -41,6 +41,29 @@ def test_migrate(svip_factory):
     assert appstate.get_data() == expected_data
 
 
+def test_missing_target_argument(svip_factory):
+    sv, appstate = svip_factory()
+
+    expected_match = 'sdfsd'
+    expected_match = '^parameter "target" is required when "req" is not passed to the constructor$'
+
+    with pytest.raises(ValueError, match=expected_match):
+        sv.migrate()
+
+
+def test_req_in_constructor(svip_factory):
+    sv, appstate = svip_factory(req='~0.1')
+    sv.migrate()
+    expected_data = [
+        'up to v0.0.1',
+        'up to v0.0.2',
+        'up to v0.1.0',
+        'up to v0.1.2',
+        'up to v0.1.15',
+    ]
+    assert appstate.get_data() == expected_data
+
+
 def test_step_no_argument(svip_factory):
     sv, appstate = svip_factory(dirs=['with-step-no-argument'])
 

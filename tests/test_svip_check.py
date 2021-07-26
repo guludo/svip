@@ -41,3 +41,20 @@ def test_compatible_version(svip_factory):
     sv.migrate(target='0.1.15')
 
     sv.check('~0.1')
+
+
+def test_missing_spec(svip_factory):
+    sv, appstate = svip_factory()
+
+    expected_match = r'^a version specification is required for check\(\): either is as argument for either this method or the constructor$'
+
+    with pytest.raises(ValueError, match=expected_match):
+        sv.check()
+
+
+def test_req_in_constructor(svip_factory):
+    sv, appstate = svip_factory(req='~0.1')
+
+    sv.migrate(target='0.1.15')
+
+    sv.check()

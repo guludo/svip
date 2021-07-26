@@ -72,7 +72,7 @@ def migrations_with_appstatemock_dir_factory(datadir, merge_steps_dirs):
 
 @pytest.fixture
 def svip_factory(migrations_with_appstatemock_dir_factory):
-    def factory(dirs=[], ctx_extra={}, appstate=None, **appstatemock_kw):
+    def factory(dirs=[], ctx_extra={}, appstate=None, req='', **appstatemock_kw):
         migrations_dir=migrations_with_appstatemock_dir_factory(*dirs)
         if not appstate:
             appstate = appstatemock.AppStateMock(**appstatemock_kw)
@@ -80,6 +80,7 @@ def svip_factory(migrations_with_appstatemock_dir_factory):
         ctx.update(ctx_extra)
         sv = svip.SVIP(
             asb=appstate.asb,
+            req=req,
             conf=svip.SVIPConf(migrations_dir=migrations_dir),
             ctx=ctx,
         )

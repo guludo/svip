@@ -49,6 +49,7 @@ class SVIP:
 
     def __init__(self,
             asb: appstate.AppStateBackend,
+            req: T.Union[str, semver.NpmSpec] = None,
             conf: SVIPConf = SVIPConf(),
             ctx: T.Any = None,
         ):
@@ -60,6 +61,11 @@ class SVIP:
           updating version information; generating and restoring backup; and
           encapsulating the migration process in a transaction.
 
+        :param req: if not none, an NPM-style version specification that
+          indicates the required version range the current application code
+          requires the state schema to be in. If a non-empty `str` is provided
+          for this parameter, it is converted to a `semantic_version.NpmSpec`.
+
         :param conf: the configuration object.
 
         :param ctx: value that will be passed down to the migration manager.
@@ -67,7 +73,13 @@ class SVIP:
           migration steps (e.g. a database connection).
         """
         self.__asb = asb
+
+        if req and isinstance(req, str):
+            req = semver.NpmSpec(req)
+        self.__req = req or None
+
         self.__conf = conf
+
         self.__manager = migration.MigrationManager(
             path=self.__conf.migrations_dir,
             ctx=ctx,
@@ -80,12 +92,16 @@ class SVIP:
         current, _ = self.__asb.get_version()
         return current
 
-    def check(self, spec: T.Union[str, semver.NpmSpec]):
+    def check(self, spec: T.Union[str, semver.NpmSpec] = ''):
         """
         Check if application code can use the application state now.
 
-        :param spec: an NPM-style version requirement specification. If a `str`
-          is provided, it is converted to a `semantic_version.NpmSpec`.
+        :param spec: an NPM-style version requirement specification that
+          indicates the version range the current application code requires the
+          state schema to be in. If omitted, the argument passed to the ``req``
+          parameter of the constructor is used. If a non-empty `str` is
+          provided for this parameter, it is converted to a
+          `semantic_version.NpmSpec`.
 
         This method does the following checks:
 
@@ -116,8 +132,15 @@ class SVIP:
             msg = f'there is a migration in progress for version {target}'
             raise errors.MigrationInProgressError(msg)
 
-        if isinstance(spec, str):
+        if spec and isinstance(spec, str):
             spec = semver.NpmSpec(spec)
+
+        if not spec:
+            spec = self.__req
+
+        if not spec:
+            msg = 'a version specification is required for check(): either is as argument for either this method or the constructor'
+            raise ValueError(msg)
 
         if not spec.match(current):
             msg = f'version spec {spec} is incompatible with current schema version {current}'
@@ -136,7 +159,7 @@ class SVIP:
         return self.__manager
 
     def migrate(self,
-            target: T.Union[str, semver.Version],
+            target: T.Union[str, semver.Version] = '',
             save_backup: bool = True,
             restore_backup: bool = None,
             allow_no_guardrails: bool = False,
@@ -147,7 +170,9 @@ class SVIP:
 
         The value `target` of target can be either a `semantic_version.Version`
         object or a string. In the case of the latter, the string will be
-        converted to a `semantic_version.Version` object.
+        converted to a `semantic_version.Version` object. If ommitted, the
+        latest version matching the argument for the parameter ``req`` passsed
+        to the constructor is used.
 
         This method gathers the sequence all migrations that must be executed
         in order to get the application's state to the target schema version
@@ -209,8 +234,14 @@ class SVIP:
         :raises TransactionFailedError: if an error occurred when creating the
           transaction.
         """
-        if isinstance(target, str):
+        if target and isinstance(target, str):
             target = semver.Version(target)
+
+        if not target:
+            if not self.__req:
+                msg = 'parameter "target" is required when "req" is not passed to the constructor'
+                raise ValueError(msg)
+            target = self.__manager.get_latest_match(self.__req)
 
         # Some preflight checks
         if save_backup and not self.__asb.supports_backup():
