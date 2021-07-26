@@ -82,7 +82,7 @@ class CLI:
         self.SD.create_parsers(subparsers)
 
     @SD.add_argument(
-        'target',
+        '--target',
         type=semver.Version,
     )
     @SD.add_argument(
@@ -112,7 +112,7 @@ class CLI:
         }
 
     @SD.add_argument(
-        'spec',
+        '--spec',
         type=semver.NpmSpec,
     )
     def __cmd_match(self, args):

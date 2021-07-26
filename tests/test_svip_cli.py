@@ -12,10 +12,10 @@ def test_exit_status(svip_factory):
     cli = sv.cli()
 
     # Existing version
-    assert cli.run(argv=['migrate', '0.1.15']) == 0
+    assert cli.run(argv=['migrate', '--target', '0.1.15']) == 0
 
     # Non-existing version
-    assert cli.run(argv=['migrate', '4.0.0']) == 1
+    assert cli.run(argv=['migrate', '--target', '4.0.0']) == 1
 
 
 def test_print_returned_value(svip_factory):
@@ -23,7 +23,7 @@ def test_print_returned_value(svip_factory):
     cli = sv.cli()
 
     with contextlib.redirect_stdout(io.StringIO()) as f:
-        cli.run(argv=['match', '^0.1.0'])
+        cli.run(argv=['match', '--spec', '^0.1.0'])
 
     assert f.getvalue() == '0.1.15\n'
 
@@ -52,7 +52,8 @@ def test_print_generator_returned_value(svip_factory):
 
 @pytest.mark.parametrize('argv,expected_call_data', [
     (
-        ['migrate', '2.0.1',
+        ['migrate',
+            '--target', '2.0.1',
             '--save-backup',
             '--no-restore-backup',
             '--allow-no-guardrails',
@@ -69,7 +70,7 @@ def test_print_generator_returned_value(svip_factory):
         },
     ),
     (
-        ['match', '^2.0'],
+        ['match', '--spec', '^2.0'],
         {
             'fn': lambda sv: sv.get_migrations_manager().get_latest_match,
             'args': tuple(),
