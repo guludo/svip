@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import collections.abc as C
 import typing as T

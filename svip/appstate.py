@@ -3,6 +3,8 @@ This module provides the class `AppStateBackend`, which is the abstract base
 class that application state back ends (ASBs) must extend in order to provide
 essential functionality for the migration process.
 """
+from __future__ import annotations
+
 import abc
 import datetime
 import contextlib

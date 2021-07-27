@@ -2,6 +2,8 @@
 This module provides the class `SVIP`, which models de central object to be
 used for performing common operations of SVIP.
 """
+from __future__ import annotations
+
 import contextlib
 import pathlib
 import traceback

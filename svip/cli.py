@@ -2,6 +2,8 @@
 This module provides the class `CLI`, which provides a command line interface
 for SVIP.
 """
+from __future__ import annotations
+
 import argparse
 import collections.abc
 import sys

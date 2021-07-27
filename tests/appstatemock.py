@@ -2,6 +2,8 @@
 This module provides the `AppStateMock` class, which simulates the
 functionality required for application state back ends.
 """
+from __future__ import annotations
+
 import semantic_version as semver
 
 import copy

@@ -12,6 +12,8 @@ This module provides classes related to the migration process.
 `MigrationInfo`
     A `MigrationInfo` object contains information about a migration process.
 """
+from __future__ import annotations
+
 from collections.abc import Iterable
 import abc
 import collections.abc

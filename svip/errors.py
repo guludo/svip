@@ -1,6 +1,7 @@
 """
 This module provides `Exception` subclasses used by SVIP for errors.
 """
+from __future__ import annotations
 
 class ErrorBase(Exception):
     """
