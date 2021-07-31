@@ -7,6 +7,7 @@ from .appstate import (
     AppStateBackend,
     AppStateBackup,
     AppStateTransaction,
+    AppStateTestInterface,
 )
 
 from . import errors

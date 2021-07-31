@@ -265,3 +265,34 @@ class AppStateBackend(abc.ABC):
         ``transaction()`` method is overriden by the subclass.
         """
         return self.transaction.__func__ != AppStateBackend.transaction
+
+    def get_test_interface(self) -> AppStateTestInterface:
+        """
+        Return an object that provides extra functionalities specific for
+        tests.
+
+        ASBs that want to supporting being tested with SVIP test scripts must
+        implement this.
+
+        This method is used by SVIP test scripts. Regular code should not use
+        this method.
+        """
+        raise NotImplementedError() # pragma: no cover
+
+
+class AppStateTestInterface(abc.ABC):
+    """
+    `AppStateTestInterface` objects provide extra functionalities that are used
+    by SVIP test scripts. Regular code should not use this.
+    """
+    @abc.abstractmethod
+    def set_version_no_restrictions(self,
+        current: semver.Version,
+        target: semver.Version,
+    ):
+        """
+        Provide the same functionality as for
+        `AppStateBackend.set_version()`, but always perform the update (i.e.
+        the conditions for the update must be ignored).
+        """
+        raise NotImplementedError() # pragma: no cover
