@@ -151,6 +151,9 @@ class AppStateMock:
                 )
             )
             if is_update_valid:
+                if self.__state['target_version'] == current:
+                    history_entry = (current, datetime.datetime.utcnow())
+                    self.__state['version_history'].append(history_entry)
                 self.__state['current_version'] = current
                 self.__state['target_version'] = target
             return is_update_valid, current_before, target_before
