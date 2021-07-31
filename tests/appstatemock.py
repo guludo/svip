@@ -172,7 +172,7 @@ class AppStateMock:
             return self.__state['current_version'], self.__state['target_version']
 
         @method(cond=with_version_history)
-        def get_version_history(self):
+        def get_version_history(asb):
             return copy.deepcopy(self.__state['version_history'])
 
         def restore_state(saved_state):
@@ -192,7 +192,7 @@ class AppStateMock:
                     def restore(bkp):
                         if fail_restore_backup:
                             raise Exception('backup restore failed on purpose')
-                        restore_state(self.__saved_state)
+                        restore_state(bkp.__saved_state)
 
             return Backup(copy_state())
 
