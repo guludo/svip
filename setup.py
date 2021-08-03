@@ -13,6 +13,8 @@ setuptools.setup(
             'coverage~=5.5',
             'pytest-mongo~=2.1',
         ],
+        'mongo-asb': [
+            'pymongo~=3.12',
         ],
     },
 )
