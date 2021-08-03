@@ -11,6 +11,8 @@ setuptools.setup(
         'tests': [
             'pytest~=6.2',
             'coverage~=5.5',
+            'pytest-mongo~=2.1',
+        ],
         ],
     },
 )

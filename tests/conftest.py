@@ -9,6 +9,16 @@ import pytest
 import appstatemock
 import svip
 
+pytest_plugins = []
+
+# Load pytest-mongo plugin only if pymongo is available
+try:
+    import pymongo
+except ModuleNotFoundError:
+    pass
+else:
+    pytest_plugins.append('pytest_mongo.plugin')
+
 
 @pytest.fixture
 def datadir():
