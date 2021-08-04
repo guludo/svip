@@ -118,7 +118,7 @@ def test_backup_info(asb):
     bkp = asb.backup(migration_info)
     bkp_info = bkp.info()
     assert bkp_info.startswith('backup is in directory: ')
-    assert bkp_info.endswith('-svip-asb-backup.gz')
+    assert bkp_info.endswith('-svip-mongo-asb-backup.gz')
 
 
 def test_duplicate_backup_output(asb, monkeypatch):
@@ -141,7 +141,7 @@ def test_duplicate_backup_output(asb, monkeypatch):
     first_bkp = asb.backup(migration_info)
     with pytest.raises(
         RuntimeError,
-        match=r'^refusing to do backup: path .*-svip-asb-backup\.gz exists$',
+        match=r'^refusing to do backup: path .*-svip-mongo-asb-backup\.gz exists$',
     ):
         second_bkp = asb.backup(migration_info)
 

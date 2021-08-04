@@ -24,7 +24,7 @@ class MongoASBConf:
 
     def __init__(self,
         versioning_collection: str = 'svip_versioning',
-        backups_dir: pathlib.Path = pathlib.Path('mongo-asb-backups'),
+        backups_dir: pathlib.Path = pathlib.Path('migration-backups'),
         cli_connection_options: list[str] = None,
         cli_authentication_options: list[str] = [],
         cli_dump_prefix: list[str] = ['mongodump'],
@@ -368,7 +368,7 @@ class MongoASB(appstate.AppStateBackend):
 
     def backup(self, info: migration.MigrationInfo) -> MongoASBBackup:
         t = datetime.datetime.utcnow()
-        dir_name = t.strftime('%Y-%m-%d_%H:%M:%S-svip-asb-backup.gz')
+        dir_name = t.strftime('%Y-%m-%d_%H:%M:%S-svip-mongo-asb-backup.gz')
         backup_dir = self.__conf.backups_dir / dir_name
         return MongoASBBackup(
             db=self.__db,
