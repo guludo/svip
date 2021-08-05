@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import contextlib
 import pathlib
+import sys
 import traceback
 import typing as T
 
@@ -165,6 +166,7 @@ class SVIP:
             save_backup: bool = True,
             restore_backup: bool = None,
             allow_no_guardrails: bool = False,
+            verbose: bool = False,
         ):
         """
         Perform the migration of the application state to a target schema
@@ -201,6 +203,9 @@ class SVIP:
         implement transactions, then this method refused to continue unless
         `allow_no_guardrails`` is true (which is false by default).
 
+        If `verbose` is true, then feedback messages are printed to the
+        standard output as the operation goes.
+
         This method raises an error in case of a failure. The following
         exceptions might be raised:
 
@@ -236,6 +241,16 @@ class SVIP:
         :raises TransactionFailedError: if an error occurred when creating the
           transaction.
         """
+        if verbose:
+            def pr(*k, **kw):
+                kw['file'] = sys.stdout
+                print(*k, **kw)
+        else:
+            def pr(*k, **kw):
+                pass
+
+        pr('Performing pre-flight checks...')
+
         if target and isinstance(target, str):
             target = semver.Version(target)
 
@@ -269,13 +284,23 @@ class SVIP:
             msg = 'refusing to continue: application state is marked as inconsistent'
             raise errors.InconsistentStateError(msg)
 
+        pr('Pre-flight checks passed.')
+
         current, _ = self.__asb.get_version()
 
+        pr(f'Current schema version: {current}')
+
         if current == target:
+            pr('Current schema version matches target version. Nothing to do.')
             return
 
         is_upgrade = current < target
         steps = self.__manager.get_steps(current=current, target=target)
+
+        pr(
+            f'We will {"upgrade" if is_upgrade else "downgrade"} the schema '
+            f'version from {current} to {target}'
+        )
 
         # Mark the start of a migration process.
         try:
@@ -302,6 +327,7 @@ class SVIP:
         )
 
         def restore_version(original_error):
+            pr(f'Restoring version value to {current}')
             try:
                 restored, _, _ = self.__asb.set_version(
                     current=current,
@@ -316,6 +342,7 @@ class SVIP:
 
         # Save a backup if applicable.
         if save_backup:
+            pr('Saving backup...')
             try:
                 backup = self.__asb.backup(migration_info)
             except Exception as e:
@@ -331,12 +358,18 @@ class SVIP:
                     )
                     raise
                 raise error
+            else:
+                pr('Backup information:')
+                for line in backup.info().splitlines():
+                    pr(f'    {line}')
 
         # Create the transaction if applicable.
         try:
             if self.__asb.supports_transaction():
+                pr('Migration will be ensapsulated in a transaction.')
                 transaction = self.__asb.transaction()
             else:
+                pr('Migration will NOT be ensapsulated in a transaction.')
                 transaction = contextlib.nullcontext()
         except Exception as e:
             msg = f'failed to start transaction: {e}'
@@ -355,12 +388,14 @@ class SVIP:
         try:
             with transaction:
                 for step in steps:
+                    pr(f'Running {"up" if is_upgrade else "down"}() of {step.path.name}')
                     try:
                         if is_upgrade:
                             step.up()
                         else:
                             step.down()
                     except Exception as e:
+                        pr(f'Step {step.path.name} FAILED!')
                         formatted_error = traceback.format_exc(limit=-1)
                         if is_upgrade:
                             msg = f'error running upgrade step to {step.version}: {formatted_error}'
@@ -390,6 +425,7 @@ class SVIP:
                 if self.__asb.supports_transaction() and transaction.rollback_successful():
                     restore_version(migration_error)
                 elif save_backup and restore_backup and backup:
+                    pr('Restoring backup...')
                     try:
                         backup.restore()
                     except Exception as e:
@@ -398,6 +434,7 @@ class SVIP:
                         raise errors.RestoreFailedError(msg, migration_error) from e
                     else:
                         restore_version(migration_error)
+                        pr('Backup restored.')
                 else:
                     # Well, if we have no means of restoring application state,
                     # then let's just raise the original error and let the
@@ -417,3 +454,4 @@ class SVIP:
                 # application state. Let's just raise the original error.
                 raise migration_error
         # Phew! If we got here, the migration process was a success :-)
+        pr('Yes! Migration successful.')

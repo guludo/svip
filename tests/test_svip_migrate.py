@@ -1,3 +1,6 @@
+import contextlib
+import io
+
 import pytest
 import semantic_version as semver
 
@@ -39,6 +42,36 @@ def test_migrate(svip_factory):
     # Test no-op
     sv.migrate(target=semver.Version('0.0.2'))
     assert appstate.get_data() == expected_data
+
+
+@pytest.mark.parametrize('case', ['verbose', 'non-verbose'])
+def test_verbose(svip_factory, case):
+    sv, appstate = svip_factory()
+    verbose = case == 'verbose'
+    with contextlib.redirect_stdout(io.StringIO()) as f:
+        sv.migrate(target=semver.Version('2.65.921'), verbose=verbose)
+    if verbose:
+        expected_output = '\n'.join([
+            'Performing pre-flight checks...',
+            'Pre-flight checks passed.',
+            'Current schema version: 0.0.0',
+            'We will upgrade the schema version from 0.0.0 to 2.65.921',
+            'Saving backup...',
+            'Backup information:',
+            '    Backup()',
+            'Migration will be ensapsulated in a transaction.',
+            'Running up() of v0.0.1__this-is-the-first-step.py',
+            'Running up() of v0.0.2__this-is-the-second-step.py',
+            'Running up() of v0.1.0__this-is-the-first-bump-on-minor.py',
+            'Running up() of v0.1.2__this-must-be-before-0.1.15.py',
+            'Running up() of v0.1.15__bumps-higher-than-one-are-okay.py',
+            'Running up() of v2.65.921__an-unusual-patch-version.py',
+            'Yes! Migration successful.',
+            '',
+        ])
+    else:
+        expected_output = ''
+    assert f.getvalue() == expected_output
 
 
 def test_missing_target_argument(svip_factory):
