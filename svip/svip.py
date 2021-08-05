@@ -396,6 +396,8 @@ class SVIP:
                         msg = f'failed to restore backup after migration failure: {e}'
                         msg += f'\nmigration error: {migration_error}'
                         raise errors.RestoreFailedError(msg, migration_error) from e
+                    else:
+                        restore_version(migration_error)
                 else:
                     # Well, if we have no means of restoring application state,
                     # then let's just raise the original error and let the

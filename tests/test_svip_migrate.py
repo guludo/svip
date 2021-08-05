@@ -256,18 +256,27 @@ def test_failed_to_start_migration(svip_factory, fail_restore_version, cause):
 @pytest.mark.parametrize('fail_restore_state', [
     'no_fail',
     'rollback',
+    'fail_rollback_but_restore_backup',
     'rollback_and_backup',
 ])
 def test_error_during_migration(svip_factory, fail_restore_state):
     sv, appstate = svip_factory(
         dirs=['with-error-in-step'],
-        fail_rollback=fail_restore_state in ('rollback', 'rollback_and_backup'),
+        fail_rollback=fail_restore_state in (
+            'rollback',
+            'rollback_and_backup',
+            'fail_rollback_but_restore_backup',
+        ),
         fail_restore_backup=fail_restore_state == 'rollback_and_backup',
     )
 
     previous_snapshot = appstate.get_snapshot()
 
-    if fail_restore_state in ('no_fail', 'rollback'):
+    if fail_restore_state in (
+        'no_fail',
+        'rollback',
+        'fail_rollback_but_restore_backup',
+    ):
         expected_exception = svip.errors.MigrationError
         expected_match = (
             r'failed to run migration: error running upgrade step to 1\.3\.0: '
@@ -286,10 +295,13 @@ def test_error_during_migration(svip_factory, fail_restore_state):
     with pytest.raises(expected_exception, match=expected_match):
         sv.migrate(
             target='2.65.921',
-            restore_backup=fail_restore_state == 'rollback_and_backup'
+            restore_backup=fail_restore_state in (
+                'rollback_and_backup',
+                'fail_rollback_but_restore_backup',
+            ),
         )
 
-    if fail_restore_state == 'no_fail':
+    if fail_restore_state in ('no_fail', 'fail_rollback_but_restore_backup'):
         assert previous_snapshot == appstate.get_snapshot()
     else:
         with pytest.raises(svip.errors.InconsistentStateError):
