@@ -66,6 +66,7 @@ def test_print_generator_returned_value(svip_factory):
                 'save_backup': True,
                 'restore_backup': False,
                 'allow_no_guardrails': True,
+                'verbose': True,
             },
         },
     ),

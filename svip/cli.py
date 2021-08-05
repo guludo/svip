@@ -102,6 +102,11 @@ class CLI:
         action=cli_util.BoolAction,
         default=False,
     )
+    @SD.add_argument(
+        '--verbose',
+        action=cli_util.BoolAction,
+        default=True,
+    )
     def __cmd_migrate(self, args):
         return {
             'fn': self.__sv.migrate,
@@ -110,6 +115,7 @@ class CLI:
                 'save_backup': args.save_backup,
                 'restore_backup': args.restore_backup,
                 'allow_no_guardrails': args.allow_no_guardrails,
+                'verbose': args.verbose,
             },
         }
 
