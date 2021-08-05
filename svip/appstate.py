@@ -48,7 +48,15 @@ class AppStateBackup(abc.ABC):
 
         :returns: the string containing the info.
         """
-        return repr(self)
+        class_name = type(self).__name__
+        attr_names = sorted(
+            name for name in dir(self)
+            if not callable(getattr(self, name)) and name[0] != '_'
+        )
+        attrs_str = ', '.join(
+            f'{name}={getattr(self, name)!r}' for name in attr_names
+        )
+        return f'{class_name}({attrs_str})'
 
 
 class AppStateTransaction(contextlib.AbstractContextManager):

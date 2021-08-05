@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Built-in implementation of an ASB for MongoDB
 
+### Changed
+- Nicer default for `AppStateBackup` subclasses that do not override `info()`:
+  it inspects attributes and print them
+
 ### Fixed
 - Using `from __future__ import annotations` in order to support latest
   features regarding annotations in different releases of Python 3.

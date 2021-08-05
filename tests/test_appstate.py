@@ -39,3 +39,12 @@ def test_supports_transaction():
             pass
 
     assert AppStateWithTransaction().supports_transaction() == True
+
+
+def test_default_backup_info():
+    class Bkp(svip.AppStateBackup):
+        foo = 'foo value'
+        bar = [{'a': 'more'}, [{'complex': 'value'}]]
+
+    expected = "Bkp(bar=[{'a': 'more'}, [{'complex': 'value'}]], foo='foo value')"
+    assert Bkp().info() == expected
