@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Built-in implementation of an ASB for MongoDB
+- Migration process now can be verbose, printing feedback messages as the
+  migration process goes. The method `SVIP.migrate()` and the command `migrate`
+  are non-verbose and verbose by default, respectively.
 
 ### Changed
 - Nicer default for `AppStateBackup` subclasses that do not override `info()`:
