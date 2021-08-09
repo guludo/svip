@@ -102,6 +102,16 @@ def test_print_generator_returned_value(svip_factory):
             },
         },
     ),
+    (
+        ['backup'],
+        {
+            'fn': lambda sv: sv.backup,
+            'args': tuple(),
+            'kwargs': {
+                'verbose': True,
+            },
+        }
+    ),
 ])
 def test_dryruns(svip_factory, argv, expected_call_data):
     sv, appstate = svip_factory()

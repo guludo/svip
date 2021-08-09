@@ -151,3 +151,12 @@ class CLI:
                 'target': args.target,
             },
         }
+
+    @SD.cmd()
+    def __cmd_backup(self, args):
+        return {
+            'fn': self.__sv.backup,
+            'kwargs': {
+                'verbose': True,
+            },
+        }
