@@ -342,13 +342,10 @@ class SVIP:
 
         # Save a backup if applicable.
         if save_backup:
-            pr('Saving backup...')
             try:
-                backup = self.__asb.backup(migration_info)
-            except Exception as e:
+                backup = self.__backup(migration_info, verbose=verbose)
+            except Exception as error:
                 backup = None
-                msg = f'failed to perform backup: {e}'
-                error = errors.BackupFailedError(msg)
                 try:
                     restore_version(error)
                 except Exception as restore_version_error:
@@ -358,10 +355,6 @@ class SVIP:
                     )
                     raise
                 raise error
-            else:
-                pr('Backup information:')
-                for line in backup.info().splitlines():
-                    pr(f'    {line}')
 
         # Create the transaction if applicable.
         try:
@@ -455,3 +448,48 @@ class SVIP:
                 raise migration_error
         # Phew! If we got here, the migration process was a success :-)
         pr('Yes! Migration successful.')
+
+    def backup(self, verbose=False) -> appstate.AppStateBackup:
+        """
+        Perform a backup outside of a migration process and return the backup
+        object.
+
+        This method is provided as a convenience for cases when it is desired
+        to acquire a backup of the application state.
+
+        :param verbose: if true, then feedback on the backup operation as well
+          as backup information is printed to the standard output. The default
+          is false.
+        """
+        if not self.__asb.supports_backup():
+            msg = 'the application state back end does not support backup operations'
+            raise errors.BackupNotImplementedError(msg)
+        return self.__backup(migration_info=None, verbose=verbose)
+
+    def __backup(self,
+        migration_info: T.Union[None, migration.MigrationInfo],
+        verbose: bool,
+    ) -> appstate.AppStateBackup:
+        """
+        Use the ASB to perform a backup.
+        """
+        if verbose:
+            def pr(*k, **kw):
+                kw['file'] = sys.stdout
+                print(*k, **kw)
+        else:
+            def pr(*k, **kw):
+                pass
+
+        pr('Saving backup...')
+        try:
+            backup = self.__asb.backup(migration_info)
+        except Exception as e:
+            msg = f'failed to perform backup: {e}'
+            raise errors.BackupFailedError(msg)
+            raise error
+        else:
+            pr('Backup information:')
+            for line in backup.info().splitlines():
+                pr(f'    {line}')
+            return backup
