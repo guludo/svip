@@ -117,7 +117,7 @@ def test_backup_info(asb):
     )
     bkp = asb.backup(migration_info)
     bkp_info = bkp.info()
-    assert bkp_info.startswith('backup is in directory: ')
+    assert bkp_info.startswith('backup is at: ')
     assert bkp_info.endswith('-svip-mongo-asb-backup.gz')
 
 

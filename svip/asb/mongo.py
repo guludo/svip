@@ -158,7 +158,7 @@ class MongoASBBackup(appstate.AppStateBackup):
             )
 
     def info(self):
-        return f'backup is in directory: {self.__path}'
+        return f'backup is at: {self.__path}'
 
 
 class MongoASBTestInterface(appstate.AppStateTestInterface):
