@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Nicer default for `AppStateBackup` subclasses that do not override `info()`:
   it inspects attributes and print them
+- ASBs that support backup are now required to support performing backup with
+  `None` as the argument for the `migration_info` parameter.
 
 ### Fixed
 - Using `from __future__ import annotations` in order to support latest

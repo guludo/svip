@@ -1,6 +1,7 @@
 import datetime
 import itertools
 import pathlib
+import re
 import subprocess
 
 import pytest
@@ -110,15 +111,45 @@ def test_data_already_initialized(asb_factory):
     asb2 = asb_factory()
 
 
-def test_backup_info(asb):
-    migration_info = svip.migration.MigrationInfo(
-        current=semver.Version('0.0.0'),
-        target=semver.Version('0.0.1'),
-    )
+@pytest.mark.parametrize(
+    'with_migration,with_cli_auth',
+    [
+        ['with_migration', 'without_cli_auth'],
+        ['without_migration', 'without_cli_auth'],
+        ['without_migration', 'with_cli_auth'],
+    ],
+)
+def test_backup_info(asb, with_migration, with_cli_auth):
+    if with_migration == 'with_migration':
+        migration_info = svip.migration.MigrationInfo(
+            current=semver.Version('0.0.0'),
+            target=semver.Version('0.0.1'),
+        )
+    else:
+        migration_info = None
+
     bkp = asb.backup(migration_info)
+
+
+    if with_cli_auth == 'with_cli_auth':
+        bkp._MongoASBBackup__conf.cli_authentication_options = ['foo', 'bar']
+
     bkp_info = bkp.info()
-    assert bkp_info.startswith('backup is at: ')
-    assert bkp_info.endswith('-svip-mongo-asb-backup.gz')
+
+    if migration_info:
+        expected_pattern = '^backup is at: .*$'
+    else:
+        expected_pattern = (
+            r'^backup is at: .+\n'
+            r'you can pass it as the standard input to the following '
+            r'command to restore the backup:\n'
+            r'    .*mongorestore '
+        )
+        if with_cli_auth == 'with_cli_auth':
+            expected_pattern += r'.*MASKED_AUTH_OPTIONS '
+        expected_pattern += r'.*--drop --gzip --archive$'
+
+    assert re.match(expected_pattern, bkp_info)
 
 
 def test_duplicate_backup_output(asb, monkeypatch):

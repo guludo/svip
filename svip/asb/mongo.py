@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import datetime
 import pathlib
+import shlex
 import subprocess
+import typing as T
 
 import semantic_version as semver
 import pymongo.database
@@ -88,6 +90,7 @@ class MongoASBBackup(appstate.AppStateBackup):
             db: pymongo.database.Database,
             path: pathlib.Path,
             conf: MongoASBConf,
+            is_in_migration: bool,
         ):
         path = pathlib.Path(path)
         if path.exists():
@@ -129,27 +132,10 @@ class MongoASBBackup(appstate.AppStateBackup):
         self.__port = port
         self.__db_name = db_name
         self.__conf = conf
+        self.__is_in_migration = is_in_migration
 
     def restore(self):
-        if self.__conf.cli_connection_options is None:
-            cli_connection_options = ( # pragma: no cover
-                '--host', self.__host,
-                '--port', self.__port,
-            )
-        else:
-            cli_connection_options = tuple()
-
-        cmd = (
-            *self.__conf.cli_restore_prefix,
-            *cli_connection_options,
-            *self.__conf.cli_authentication_options,
-            *self.__conf.cli_restore_extra_options,
-            '--drop',
-            '--gzip',
-            '--archive',
-        )
-        cmd = tuple(str(v) for v in cmd)
-
+        cmd = self.__get_restore_cmd(mask_auth_options=False)
         with open(self.__path, 'rb') as f:
             subprocess.run(
                 cmd,
@@ -158,7 +144,37 @@ class MongoASBBackup(appstate.AppStateBackup):
             )
 
     def info(self):
-        return f'backup is at: {self.__path}'
+        lines = [f'backup is at: {self.__path}']
+        if not self.__is_in_migration:
+            lines.append('you can pass it as the standard input to the following command to restore the backup:')
+            cmd = shlex.join(self.__get_restore_cmd(mask_auth_options=True))
+            lines.append(f'    {cmd}')
+        return '\n'.join(lines)
+
+    def __get_restore_cmd(self, mask_auth_options: bool):
+        if self.__conf.cli_connection_options is None:
+            cli_connection_options = ( # pragma: no cover
+                '--host', self.__host,
+                '--port', self.__port,
+            )
+        else:
+            cli_connection_options = tuple()
+
+        cli_authentication_options = self.__conf.cli_authentication_options
+        if mask_auth_options and cli_authentication_options:
+            cli_authentication_options = ('MASKED_AUTH_OPTIONS',)
+
+        cmd = (
+            *self.__conf.cli_restore_prefix,
+            *cli_connection_options,
+            *cli_authentication_options,
+            *self.__conf.cli_restore_extra_options,
+            '--drop',
+            '--gzip',
+            '--archive',
+        )
+        cmd = tuple(str(v) for v in cmd)
+        return cmd
 
 
 class MongoASBTestInterface(appstate.AppStateTestInterface):
@@ -366,7 +382,7 @@ class MongoASB(appstate.AppStateBackend):
             for version, timestamp in data['history']
         ]
 
-    def backup(self, info: migration.MigrationInfo) -> MongoASBBackup:
+    def backup(self, info: T.Union[None, migration.MigrationInfo]) -> MongoASBBackup:
         t = datetime.datetime.utcnow()
         dir_name = t.strftime('%Y-%m-%d_%H:%M:%S-svip-mongo-asb-backup.gz')
         backup_dir = self.__conf.backups_dir / dir_name
@@ -374,6 +390,7 @@ class MongoASB(appstate.AppStateBackend):
             db=self.__db,
             path=backup_dir,
             conf=self.__conf,
+            is_in_migration=info is not None,
         )
 
     def backup_supports_restore(self) -> bool:

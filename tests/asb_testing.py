@@ -145,7 +145,8 @@ def generate_tests(
         assert sorted(history_timestamps) == list(history_timestamps)
     test_functions[f'test_asb_{name}_version_history'] = test_version_history
 
-    def test_backup(request):
+    @pytest.mark.parametrize('with_migration', ['with_migration', 'without_migration'])
+    def test_backup(request, with_migration):
         asb = request.getfixturevalue(asb_fixture_name)
 
         assert asb.supports_backup() == supports_backup
@@ -158,10 +159,14 @@ def generate_tests(
         asb.set_version(semver.Version('0.1.0'), None)
         asb.set_version(semver.Version('0.1.0'), semver.Version('1.0.0'))
 
-        migration_info = svip.migration.MigrationInfo(
-            current=semver.Version('0.1.0'),
-            target=semver.Version('1.0.0'),
-        )
+        if with_migration == 'with_migration':
+            migration_info = svip.migration.MigrationInfo(
+                current=semver.Version('0.1.0'),
+                target=semver.Version('1.0.0'),
+            )
+        else:
+            migration_info = None
+
         bkp = asb.backup(migration_info)
         assert isinstance(bkp, svip.AppStateBackup)
 

@@ -226,6 +226,8 @@ class AppStateBackend(abc.ABC):
         ABSs that do not support backups do not need to override this method.
 
         :param info: object containing information about the migration process.
+          If this method is called outside of a migration process, the argument
+          for this parameter will be null.
 
         :returns: an object representing the backup.
         """
