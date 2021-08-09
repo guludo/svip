@@ -147,7 +147,8 @@ class MongoASBBackup(appstate.AppStateBackup):
         lines = [f'backup is at: {self.__path}']
         if not self.__is_in_migration:
             lines.append('you can pass it as the standard input to the following command to restore the backup:')
-            cmd = shlex.join(self.__get_restore_cmd(mask_auth_options=True))
+            cmd = self.__get_restore_cmd(mask_auth_options=True)
+            cmd = ' '.join(shlex.quote(part) for part in cmd)
             lines.append(f'    {cmd}')
         return '\n'.join(lines)
 
