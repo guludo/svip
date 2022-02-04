@@ -160,6 +160,26 @@ def test_no_guardrails(svip_factory):
     assert appstate.get_data() == expected_data
 
 
+def test_no_backup_no_guardrails_with_error(svip_factory):
+    """
+    Avoid regression because of variable `backup` being read before
+    initialization.
+
+    This test probably should not be needed if we were using a static code
+    linter.
+    """
+    sv, appstate = svip_factory(
+        dirs=['with-error-in-step'],
+        with_transaction=False,
+    )
+    with pytest.raises(svip.errors.MigrationError):
+        sv.migrate(
+            target=semver.Version('2.65.921'),
+            save_backup=False,
+            allow_no_guardrails=True,
+        )
+
+
 def test_str_version(svip_factory):
     sv, appstate = svip_factory()
     sv.migrate(target='2.65.921')

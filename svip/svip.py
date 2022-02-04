@@ -341,6 +341,7 @@ class SVIP:
                 raise errors.RestoreFailedError(msg, original_error) from e
 
         # Save a backup if applicable.
+        backup = None
         if save_backup:
             try:
                 backup = self.__backup(migration_info, verbose=verbose)

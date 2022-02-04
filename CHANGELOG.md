@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   features regarding annotations in different releases of Python 3.
 - The version information was not restored after backup was restored. That was
   a bug. Fixed now! :-)
+- Using `--no-save-backup` would cause a error when at some point of the
+  program information about availability of backup is checked. This was a bug
+  in the code because of a variable being undefined, which has been fixed now.
 
 ## 0.0.1 - 2021-07-26
 - Very basic release: code documented but we are still missing documentation
