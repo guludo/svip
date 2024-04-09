@@ -16,8 +16,8 @@ pytest.importorskip('pymongo')
 
 # Skip if docker is not available
 try:
-    subprocess.run(['docker', '--version'], stdout=None, check=True)
-except FileNotFoundError:
+    subprocess.run(['docker', 'ps'], stdout=None, check=True)
+except:
     pytest.skip('docker command is not available', allow_module_level=True)
 
 
