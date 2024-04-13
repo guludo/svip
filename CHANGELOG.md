@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   migration process goes. The method `SVIP.migrate()` and the command `migrate`
   are non-verbose and verbose by default, respectively.
 - Backups can now be performed outside of a migration context.
+- Added support for SQLite.
 
 ### Changed
 - Nicer default for `AppStateBackup` subclasses that do not override `info()`:
