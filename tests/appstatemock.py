@@ -231,11 +231,13 @@ class AppStateMock:
 
         @method
         def get_test_interface(asb):
-            state_ref = self.__state
+            def state_dict():
+                return self.__state
+
             class TestInterface(svip.AppStateTestInterface):
                 def set_version_no_restrictions(ti, current, target):
-                    state_ref['current_version'] = current
-                    state_ref['target_version'] = target
+                    state_dict().update(current_version=current, target_version=target)
+
             return TestInterface()
 
         cls = type(cls_name, cls_bases, cls_dict)
