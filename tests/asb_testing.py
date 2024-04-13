@@ -145,6 +145,13 @@ def generate_tests(
         assert sorted(history_timestamps) == list(history_timestamps)
     test_functions[f'test_asb_{name}_version_history'] = test_version_history
 
+    def test_set_string(request):
+        asb = request.getfixturevalue(asb_fixture_name)
+        ti = asb.get_test_interface()
+        ti.set_string("foo bar")
+        assert ti.get_string() == "foo bar"
+    test_functions[f'test_asb_{name}_set_string'] = test_set_string
+
     @pytest.mark.parametrize('with_migration', ['with_migration', 'without_migration'])
     def test_backup(request, with_migration):
         asb = request.getfixturevalue(asb_fixture_name)

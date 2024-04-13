@@ -205,6 +205,27 @@ class MongoASBTestInterface(appstate.AppStateTestInterface):
         if not r.matched_count:
             raise RuntimeError('no document matched for the update') # pragma: no cover
 
+    def set_string(self, s: str):
+        r = self.__coll.update_one(
+            filter={'_id': 'svip_versioning'},
+            update={
+                '$set': {'test_interface_set_string_data': s},
+            },
+        )
+
+        if not r.acknowledged:
+            raise RuntimeError('update not aknowledged') # pragma: no cover
+
+        if not r.matched_count:
+            raise RuntimeError('no document matched for the update') # pragma: no cover
+
+    def get_string(self):
+        data = self.__coll.find_one(
+            'svip_versioning',
+            {'test_interface_set_string_data': 1},
+        )
+        return data['test_interface_set_string_data']
+
 
 class MongoASB(appstate.AppStateBackend):
     """
