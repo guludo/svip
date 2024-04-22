@@ -145,6 +145,13 @@ def generate_tests(
         assert sorted(history_timestamps) == list(history_timestamps)
     test_functions[f'test_asb_{name}_version_history'] = test_version_history
 
+    def test_set_string(request):
+        asb = request.getfixturevalue(asb_fixture_name)
+        ti = asb.get_test_interface()
+        ti.set_string("foo bar")
+        assert ti.get_string() == "foo bar"
+    test_functions[f'test_asb_{name}_set_string'] = test_set_string
+
     @pytest.mark.parametrize('with_migration', ['with_migration', 'without_migration'])
     def test_backup(request, with_migration):
         asb = request.getfixturevalue(asb_fixture_name)
@@ -188,16 +195,15 @@ def generate_tests(
     @pytest.mark.parametrize('outcome', ['failed_transaction', 'successful_transaction'])
     def test_transaction(request, outcome):
         asb = request.getfixturevalue(asb_fixture_name)
+        ti = asb.get_test_interface()
 
         assert asb.supports_transaction() == supports_transaction
         if not supports_transaction:
             return
 
-        asb.set_version(semver.Version('0.0.0'), semver.Version('0.0.1'))
-        asb.set_version(semver.Version('0.0.1'), None)
-        asb.set_version(semver.Version('0.0.1'), semver.Version('0.1.0'))
-        asb.set_version(semver.Version('0.1.0'), None)
-        asb.set_version(semver.Version('0.1.0'), semver.Version('1.0.0'))
+        with asb.transaction():
+            ti.set_string('pre-transaction')
+            assert ti.get_string() == 'pre-transaction'
 
         if outcome == 'failed_transaction':
             class CustomException(Exception): pass
@@ -205,22 +211,22 @@ def generate_tests(
                 CustomException,
                 match='^testing a failed transaction',
             )
-            expected = semver.Version('0.1.0'), semver.Version('1.0.0')
+            expected = 'pre-transaction'
         else:
             ctx = contextlib.nullcontext()
-            expected = semver.Version('0.1.0'), None
+            expected = 'after-transaction'
 
         with ctx:
             with asb.transaction():
-                asb.set_version(semver.Version('0.1.0'), None)
-                asb.set_version(semver.Version('0.1.0'), semver.Version('1.0.0'))
-                asb.set_version(semver.Version('1.0.0'), None)
-                asb.set_version(semver.Version('1.0.0'), semver.Version('0.1.0'))
-                asb.set_version(semver.Version('0.1.0'), None)
+                ti.set_string('after-transaction')
+                assert ti.get_string() == 'after-transaction'
+
                 if outcome == 'failed_transaction':
                     raise CustomException('testing a failed transaction')
 
-        assert asb.get_version() == expected
+        with asb.transaction():
+            assert ti.get_string() == expected
+
     test_functions[f'test_asb_{name}_transaction'] = test_transaction
 
     return test_functions

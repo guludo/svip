@@ -95,6 +95,7 @@ class AppStateMock:
             'version_history': list(version_history) if version_history else [],
             'inconsistency': inconsistency,
             'data': None,
+            'set_string_data': '',
         }
         self.__create_asb(
             with_backup=with_backup,
@@ -231,11 +232,19 @@ class AppStateMock:
 
         @method
         def get_test_interface(asb):
-            state_ref = self.__state
+            def state_dict():
+                return self.__state
+
             class TestInterface(svip.AppStateTestInterface):
                 def set_version_no_restrictions(ti, current, target):
-                    state_ref['current_version'] = current
-                    state_ref['target_version'] = target
+                    state_dict().update(current_version=current, target_version=target)
+
+                def set_string(ti, s):
+                    state_dict()['set_string_data'] = s
+
+                def get_string(ti):
+                    return state_dict()['set_string_data']
+
             return TestInterface()
 
         cls = type(cls_name, cls_bases, cls_dict)

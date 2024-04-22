@@ -306,3 +306,20 @@ class AppStateTestInterface(abc.ABC):
         the conditions for the update must be ignored).
         """
         raise NotImplementedError() # pragma: no cover
+
+    @abc.abstractmethod
+    def set_string(self, s: str):
+        """
+        Save a short string in the database.
+
+        This method is used by the testing code to perform a simple modification
+        to the database and check it later with ``get_string()``.
+        """
+        raise NotImplementedError() # pragma: no cover
+
+    @abc.abstractmethod
+    def get_string(self) -> str:
+        """
+        Retrieve and return the string previously saved with ``set_string()``.
+        """
+        raise NotImplementedError() # pragma: no cover
