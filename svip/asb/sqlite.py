@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 ASB implementation for SQLite, which is provided by the class `SqliteASB`.
 """

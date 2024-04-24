@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 import sqlite3
 
 import pytest

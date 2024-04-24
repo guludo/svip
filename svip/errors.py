@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 This module provides `Exception` subclasses used by SVIP for errors.
 """

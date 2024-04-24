@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 This module provides the `AppStateMock` class, which simulates the
 functionality required for application state back ends.

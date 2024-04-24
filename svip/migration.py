@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 This module provides classes related to the migration process.
 

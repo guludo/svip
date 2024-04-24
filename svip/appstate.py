@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 This module provides the class `AppStateBackend`, which is the abstract base
 class that application state back ends (ASBs) must extend in order to provide

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 This module provides the class `CLI`, which provides a command line interface
 for SVIP.

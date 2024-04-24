@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 def up(self):
     appstate = self.ctx['appstate']
     data = appstate.get_data() or []

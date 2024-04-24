@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """
 This module provides the class `SVIP`, which models de central object to be
 used for performing common operations of SVIP.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 def up(self):
     appstate = self.ctx['appstate']
     if 'events' in self.ctx:

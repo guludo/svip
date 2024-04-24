@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 import semantic_version as semver
 
 import svip.migration
